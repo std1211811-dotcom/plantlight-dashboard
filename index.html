@@ -20,9 +20,12 @@
 
   .wrap{max-width:980px;margin:0 auto;padding:0 16px 24px;}
   .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;margin:12px 0;}
-/* 讓輸入欄在窄螢幕自動換行、不重疊 */
-.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
-.row > *{flex:1 1 240px; min-width:0}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .row > *{flex:1}\
+  /* 只調 Topic Base / Key 的寬度，避免擠到狀態 */
+#base { max-width: 520px; }
+#key  { max-width: 220px; }
+
   button{border:0;border-radius:14px;padding:12px 14px;cursor:pointer;font-weight:700}
   .btn{background:var(--primary);color:#fff}
   .btn2{background:#222;color:#fff}
@@ -44,11 +47,10 @@
   /* 手機/電腦版面切換 */
   .mobile-only{display:none}
   .desktop-only{display:block}
-/* 手機版：把這排改成直排 */
-@media (max-width:768px){
-  .row{flex-direction:column}
-  .row > *{flex:1 1 auto}
-}
+  @media (max-width:768px){
+    .mobile-only{display:block}
+    .desktop-only{display:none}
+  }
   @media (min-width:769px){
     .grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
     .grid3{display:grid;grid-template-columns:1fr 1fr;gap:12px}
