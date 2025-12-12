@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PlantLight Dashboard</title>
+
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --text:#111; --muted:#666;
+    --primary:#2f80ed; --ok:#0a0; --bad:#a00;
+    --shadow:0 6px 16px rgba(0,0,0,.08);
+    --r:16px;
+  }
+  body{margin:0;background:var(--bg);color:var(--text);
+       font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;}
+  header{padding:16px 16px 6px; max-width:980px; margin:0 auto;}
+  h1{margin:0 0 8px; font-size:22px;}
+  .sub{color:var(--muted);font-size:13px}
+
+  .wrap{max-width:980px;margin:0 auto;padding:0 16px 24px;}
+  .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;margin:12px 0;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .row > *{flex:1}
+  button{border:0;border-radius:14px;padding:12px 14px;cursor:pointer;font-weight:700}
+  .btn{background:var(--primary);color:#fff}
+  .btn2{background:#222;color:#fff}
+  .btn3{background:#eee;color:#111}
+  .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#eee;font-size:12px}
+  .ok{color:var(--ok)} .bad{color:var(--bad)}
+  .kv{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #eee}
+  .kv:last-child{border-bottom:none}
+  .k{display:flex;align-items:center;gap:10px;color:#222;font-weight:700}
+  .icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#eaf2ff;color:#2f80ed;font-weight:800}
+  .v{font-size:22px;font-weight:800}
+  .unit{font-size:14px;color:var(--muted);font-weight:700;margin-left:6px}
+  input[type=range]{width:100%}
+  .sliderLine{display:flex;align-items:center;gap:10px}
+  .sliderVal{min-width:76px;text-align:right;font-weight:900;font-size:18px}
+  small{color:var(--muted)}
+  pre{background:#111;color:#0f0;padding:12px;border-radius:12px;overflow:auto;font-size:12px}
+
+  /* 手機/電腦版面切換 */
+  .mobile-only{display:none}
+  .desktop-only{display:block}
+  @media (max-width:768px){
+    .mobile-only{display:block}
+    .desktop-only{display:none}
+  }
+  @media (min-width:769px){
+    .grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  }
+</style>
+</head>
+
+<body>
+<header>
+  <h1>🌱 PlantLight Dashboard</h1>
+  <div class="sub">
+    亮度/光譜在最上方。感測資訊與幫浦/風扇控制在下方。<br>
+    MQTT：<code>broker.emqx.io</code>（WSS 8084 /mqtt）
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 連線設定（先讓你之後好改） -->
+  <div class="card">
+    <div class="row">
+      <div>
+        <div><b>Topic Base</b>（要跟 ESP32 一樣）</div>
+        <input id="base" value="plantlight/yourname123" style="width:100%;padding:10px;border-radius:12px;border:1px solid #ddd">
+      </div>
+      <div>
+        <div><b>Key</b>（要跟 ESP32 一樣）</div>
+        <input id="key" value="PL1234" style="width:100%;padding:10px;border-radius:12px;border:1px solid #ddd">
+      </div>
+      <div style="flex:0.6">
+        <div><b>狀態</b></div>
+        <div class="pill"><span id="conn" class="bad">未連線</span></div>
+      </div>
+    </div>
+    <div style="margin-top:10px" class="row">
+      <button class="btn" id="btnConnect">連線 / 斷線</button>
+      <button class="btn3" id="btnSetDark">設為暗場</button>
+      <button class="btn3" id="btnSetBright">設為亮場</button>
+    </div>
+    <small>暗場：關燈時的環境光；亮場：最白(21)+最亮(100%)。</small>
+  </div>
+
+  <!-- 上方控制：亮度 & 光譜 -->
+  <div class="card">
+    <div class="grid2">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:end">
+          <div><b>亮度</b>（%）</div>
+          <div class="sliderVal" id="briShow">50%</div>
+        </div>
+        <div class="sliderLine">
+          <input id="bri" type="range" min="0" max="100" value="50">
+        </div>
+        <small>網站用 % 控制；ESP32 會映射成燈具亮度碼 0x17~0x28。</small>
+      </div>
+
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:end">
+          <div><b>光譜</b>（1=最紅，21=最白）</div>
+          <div class="sliderVal" id="specShow">1</div>
+        </div>
+        <div class="sliderLine">
+          <input id="spec" type="range" min="1" max="21" value="1">
+        </div>
+        <small>1 最紅 → 21 最白。</small>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn2" id="btnPower">🔌 長按在硬體上；網頁點這裡 = 開/關</button>
+    </div>
+  </div>
+
+  <!-- 感測資訊（像你圖那樣） -->
+  <div class="card">
+    <div class="kv">
+      <div class="k"><span class="icon">🌡</span> 溫度 (°C)</div>
+      <div class="v"><span id="t">--</span><span class="unit">°C</span></div>
+    </div>
+    <div class="kv">
+      <div class="k"><span class="icon">💧</span> 濕度 (%)</div>
+      <div class="v"><span id="h">--</span><span class="unit">%</span></div>
+    </div>
+    <div class="kv">
+      <div class="k"><span class="icon">🟦</span> CO₂ (ppm)</div>
+      <div class="v"><span id="co2">--</span><span class="unit">ppm</span></div>
+    </div>
+    <div class="kv">
+      <div class="k"><span class="icon">☀</span> 照度（相對）</div>
+      <div class="v"><span id="luxRel">--</span><span class="unit">%</span></div>
+    </div>
+    <div class="kv">
+      <div class="k"><span class="icon">➕</span> 光補償需求</div>
+      <div class="v"><span id="comp">--</span><span class="unit">%</span></div>
+    </div>
+    <div class="kv">
+      <div class="k"><span class="icon">🌱</span> 土壤濕度</div>
+      <div class="v"><span id="soil">--</span><span class="unit">%</span></div>
+    </div>
+  </div>
+
+  <!-- 幫浦/風扇 PWM 控制 -->
+  <div class="card">
+    <div class="grid2">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:end">
+          <div><b>幫浦 PWM</b></div>
+          <div class="sliderVal" id="pumpShow">0%</div>
+        </div>
+        <input id="pump" type="range" min="0" max="100" value="0">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:end">
+          <div><b>風扇 PWM</b></div>
+          <div class="sliderVal" id="fanShow">0%</div>
+        </div>
+        <input id="fan" type="range" min="0" max="100" value="0">
+      </div>
+    </div>
+    <small>兩路都走 PWM（之後 ESP32 端用 MOSFET/驅動器輸出）。</small>
+  </div>
+
+  <!-- Debug -->
+  <div class="card">
+    <b>狀態 JSON（MQTT state）</b>
+    <pre id="state">{}</pre>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script>
+  let client = null;
+
+  const $ = (id) => document.getElementById(id);
+  const connEl = $("conn");
+  const stateEl = $("state");
+
+  // sliders
+  const bri = $("bri"), spec = $("spec"), pump = $("pump"), fan = $("fan");
+  const briShow = $("briShow"), specShow = $("specShow"), pumpShow = $("pumpShow"), fanShow = $("fanShow");
+
+  function topicBase(){ return $("base").value.trim(); }
+  function key(){ return $("key").value.trim(); }
+
+  function Tcmd(){ return topicBase() + "/cmd"; }
+  function Tstate(){ return topicBase() + "/state"; }
+
+  function setConn(ok, text){
+    connEl.textContent = text;
+    connEl.className = ok ? "ok" : "bad";
+  }
+
+  function publish(obj){
+    if(!client || !client.connected) return;
+    client.publish(Tcmd(), JSON.stringify({key:key(), ...obj}), {qos:0, retain:false});
+  }
+
+  // UI 即時顯示
+  function syncShows(){
+    briShow.textContent = bri.value + "%";
+    specShow.textContent = spec.value;
+    pumpShow.textContent = pump.value + "%";
+    fanShow.textContent = fan.value + "%";
+  }
+  bri.oninput = spec.oninput = pump.oninput = fan.oninput = syncShows;
+  syncShows();
+
+  // 控制：change 時才送，避免拖曳狂發
+  bri.onchange  = () => publish({op:"bright_pct", v:Number(bri.value)});
+  spec.onchange = () => publish({op:"spec", v:Number(spec.value)});
+  pump.onchange = () => publish({op:"pump_pct", v:Number(pump.value)});
+  fan.onchange  = () => publish({op:"fan_pct", v:Number(fan.value)});
+
+  $("btnPower").onclick = () => publish({op:"power"});
+  $("btnSetDark").onclick = () => publish({op:"cal_dark"});
+  $("btnSetBright").onclick = () => publish({op:"cal_bright"});
+
+  $("btnConnect").onclick = () => {
+    if(client && client.connected){
+      client.end(true);
+      setConn(false, "已中斷");
+      return;
+    }
+    const url = "wss://broker.emqx.io:8084/mqtt";
+    client = mqtt.connect(url, {
+      clientId: "web_" + Math.random().toString(16).slice(2),
+      clean: true,
+      reconnectPeriod: 1000,
+      connectTimeout: 8000
+    });
+
+    setConn(false, "連線中...");
+
+    client.on("connect", () => {
+      setConn(true, "已連線");
+      client.subscribe([Tstate()], {qos:0});
+    });
+    client.on("reconnect", () => setConn(false, "重連中..."));
+    client.on("close", () => setConn(false, "已斷線"));
+    client.on("error", (e) => setConn(false, "錯誤"));
+
+    client.on("message", (topic, payload) => {
+      if(topic !== Tstate()) return;
+      const text = payload.toString();
+      try{
+        const obj = JSON.parse(text);
+        stateEl.textContent = JSON.stringify(obj, null, 2);
+
+        // 這些欄位等 ESP32 回報後就會更新
+        if(obj.t != null) $("t").textContent = obj.t;
+        if(obj.h != null) $("h").textContent = obj.h;
+        if(obj.co2 != null) $("co2").textContent = obj.co2;
+        if(obj.lux_rel != null) $("luxRel").textContent = obj.lux_rel;
+        if(obj.comp != null) $("comp").textContent = obj.comp;
+        if(obj.soil != null) $("soil").textContent = obj.soil;
+
+        // 讓網站顯示的 slider 跟硬體狀態同步（可選）
+        if(obj.bri_pct != null){ bri.value = obj.bri_pct; }
+        if(obj.spec != null){ spec.value = obj.spec; }
+        if(obj.pump_pct != null){ pump.value = obj.pump_pct; }
+        if(obj.fan_pct != null){ fan.value = obj.fan_pct; }
+        syncShows();
+      }catch{
+        stateEl.textContent = text;
+      }
+    });
+  };
+</script>
+</body>
+</html>
