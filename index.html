@@ -20,11 +20,13 @@
 
   .wrap{max-width:980px;margin:0 auto;padding:0 16px 24px;}
   .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;margin:12px 0;}
+
   .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-  .row > *{flex:1}\
-  /* 只調 Topic Base / Key 的寬度，避免擠到狀態 */
-#base { max-width: 460px; }
-#key  { max-width: 220px; }
+  .row > *{flex:1} /* ← 修正：移除你原本多打的 '.'，避免 CSS 解析怪掉 */
+
+  /* ✅ 只縮帳號/密碼欄位寬度，避免擠到「狀態」 */
+  #base{max-width:260px;}
+  #key{max-width:140px;}
 
   button{border:0;border-radius:14px;padding:12px 14px;cursor:pointer;font-weight:700}
   .btn{background:var(--primary);color:#fff}
@@ -69,20 +71,29 @@
 
 <div class="wrap">
 
-  <!-- 連線設定（先讓你之後好改） -->
+  <!-- 連線設定 -->
   <div class="card">
     <div class="row">
       <div>
-        <input id="base" value="plantlight/yourname123" style="width:100%;padding:10px;border-radius:12px;border:1px solid #ddd">
+        <div><b>Topic Base（要跟 ESP32 一樣）</b></div>
+        <!-- ✅ 初始帳號：4125252 -->
+        <input id="base" value="4125252"
+               style="width:100%;padding:10px;border-radius:12px;border:1px solid #ddd">
       </div>
+
       <div>
-        <input id="key" value="PL1234" style="width:100%;padding:10px;border-radius:12px;border:1px solid #ddd">
+        <div><b>Key（要跟 ESP32 一樣）</b></div>
+        <!-- ✅ 初始密碼：9527 -->
+        <input id="key" value="9527"
+               style="width:100%;padding:10px;border-radius:12px;border:1px solid #ddd">
       </div>
+
       <div style="flex:0.6">
         <div><b>狀態</b></div>
         <div class="pill"><span id="conn" class="bad">未連線</span></div>
       </div>
     </div>
+
     <div style="margin-top:10px" class="row">
       <button class="btn" id="btnConnect">連線 / 斷線</button>
       <button class="btn3" id="btnSetDark">設為暗場</button>
@@ -122,7 +133,7 @@
     </div>
   </div>
 
-  <!-- 感測資訊（像你圖那樣） -->
+  <!-- 感測資訊 -->
   <div class="card">
     <div class="kv">
       <div class="k"><span class="icon">🌡</span> 溫度 (°C)</div>
@@ -249,7 +260,7 @@
     });
     client.on("reconnect", () => setConn(false, "重連中..."));
     client.on("close", () => setConn(false, "已斷線"));
-    client.on("error", (e) => setConn(false, "錯誤"));
+    client.on("error", () => setConn(false, "錯誤"));
 
     client.on("message", (topic, payload) => {
       if(topic !== Tstate()) return;
@@ -258,7 +269,6 @@
         const obj = JSON.parse(text);
         stateEl.textContent = JSON.stringify(obj, null, 2);
 
-        // 這些欄位等 ESP32 回報後就會更新
         if(obj.t != null) $("t").textContent = obj.t;
         if(obj.h != null) $("h").textContent = obj.h;
         if(obj.co2 != null) $("co2").textContent = obj.co2;
@@ -266,7 +276,6 @@
         if(obj.comp != null) $("comp").textContent = obj.comp;
         if(obj.soil != null) $("soil").textContent = obj.soil;
 
-        // 讓網站顯示的 slider 跟硬體狀態同步（可選）
         if(obj.bri_pct != null){ bri.value = obj.bri_pct; }
         if(obj.spec != null){ spec.value = obj.spec; }
         if(obj.pump_pct != null){ pump.value = obj.pump_pct; }
