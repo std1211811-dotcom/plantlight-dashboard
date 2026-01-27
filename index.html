@@ -3,152 +3,331 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PlantLight Pro Dashboard</title>
+<title>PlantLight Pro v7.1 Dashboard</title>
 
 <style>
-:root{
-  --bg:#f0f2f5; --card:#fff; --text:#1c1e21; --muted:#65676b;
-  --primary:#1877f2; --success:#42b72a; --danger:#fa3e3e;
-  --shadow:0 2px 8px rgba(0,0,0,.1);
-  --r:12px;
+:root {
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --text: #1c1e21;
+  --muted: #65676b;
+  --primary: #1877f2;
+  --success: #42b72a;
+  --danger: #fa3e3e;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --r: 16px;
 }
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
-.container{max-width:600px;margin:0 auto;padding:16px;}
 
-/* 卡片樣式 */
-.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:16px;}
-h2{margin:0 0 12px;font-size:18px;display:flex;align-items:center;gap:8px;}
-h2 span{font-size:20px;}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
 
-/* 連線設定區 */
-.conn-box{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;}
-input{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;}
-button{border:0;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:bold;transition:0.2s;}
-.btn-blue{background:var(--primary);color:#fff;}
-.btn-blue:active{opacity:0.8;}
-.status-badge{padding:4px 8px;border-radius:99px;font-size:12px;background:#ddd;color:#555;}
-.status-badge.ok{background:#e7f3ff;color:var(--primary);}
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
 
-/* 感測器區 */
-.sensor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.sensor-item{background:#f7f8fa;padding:12px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;}
-.sensor-val{font-size:20px;font-weight:800;color:var(--primary);}
-.sensor-label{font-size:13px;color:var(--muted);}
+/* 標題與狀態 */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+h1 { margin: 0; font-size: 22px; color: #333; }
+.badge {
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: bold;
+  background: #ddd;
+  color: #666;
+}
+.badge.ok { background: #e7f3ff; color: var(--primary); }
 
-/* 燈光控制區 */
-.slider-group{margin-bottom:16px;}
-.slider-header{display:flex;justify-content:space-between;margin-bottom:6px;font-size:14px;font-weight:600;}
-input[type=range]{width:100%;cursor:pointer;}
-.btn-power{width:100%;padding:12px;background:#222;color:#fff;font-size:16px;border-radius:8px;}
+/* 卡片通用樣式 */
+.card {
+  background: var(--card);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: 20px;
+}
 
-/* 繼電器開關區 */
-.relay-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.relay-item{background:#fff;border:1px solid #eee;padding:12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;}
-.relay-name{font-weight:600;font-size:15px;}
+h2 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 連線設定 */
+.conn-row {
+  display: flex;
+  gap: 8px;
+}
+input[type=text], input[type=password] {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.btn-main {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-main:active { opacity: 0.8; }
+
+/* 感測器格線 */
+.sensor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.sensor-box {
+  background: #f7f9fa;
+  padding: 12px 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.s-val { font-size: 24px; font-weight: 800; color: #333; }
+.s-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.s-icon { font-size: 24px; opacity: 0.7; }
+
+/* 滑桿控制 */
+.slider-container { margin-bottom: 20px; }
+.slider-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 15px;
+}
+input[type=range] {
+  width: 100%;
+  height: 6px;
+  background: #ddd;
+  border-radius: 5px;
+  outline: none;
+  -webkit-appearance: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  background: var(--primary);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.btn-power {
+  width: 100%;
+  padding: 14px;
+  background: #2c3e50;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-power:active { transform: scale(0.98); }
+
+/* 開關列表 */
+.device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0px; /* Divide lines will handle spacing */
+}
+.device-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+.device-row:last-child { border-bottom: none; }
+.d-name { font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 8px;}
+.d-icon { width: 24px; text-align: center; }
 
 /* Toggle Switch CSS */
-.switch {position: relative;display: inline-block;width: 44px;height: 24px;}
-.switch input {opacity: 0;width: 0;height: 0;}
-.slider {position: absolute;cursor: pointer;top: 0;left: 0;right: 0;bottom: 0;background-color: #ccc;transition: .4s;border-radius: 24px;}
-.slider:before {position: absolute;content: "";height: 18px;width: 18px;left: 3px;bottom: 3px;background-color: white;transition: .4s;border-radius: 50%;}
-input:checked + .slider {background-color: var(--success);}
-input:checked + .slider:before {transform: translateX(20px);}
+.switch { position: relative; display: inline-block; width: 46px; height: 26px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc; transition: .3s;
+  border-radius: 34px;
+}
+.slider:before {
+  position: absolute; content: "";
+  height: 20px; width: 20px;
+  left: 3px; bottom: 3px;
+  background-color: white; transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+input:checked + .slider { background-color: var(--success); }
+input:checked + .slider:before { transform: translateX(20px); }
 
 /* Debug */
-pre{background:#222;color:#0f0;padding:10px;border-radius:8px;font-size:11px;overflow-x:auto;}
+#debug {
+  background: #222; color: #0f0; padding: 12px;
+  border-radius: 8px; font-size: 12px;
+  overflow-x: auto; white-space: pre-wrap;
+  display: none;
+}
 </style>
 </head>
 <body>
 
 <div class="container">
+  <header>
+    <h1>🌱 PlantLight Pro</h1>
+    <div id="status" class="badge">未連線</div>
+  </header>
+
   <div class="card">
-    <div class="conn-box">
-      <input id="base" value="4125252" placeholder="Topic Base">
-      <input id="key" value="9527" type="password" placeholder="Key">
-      <button class="btn-blue" id="btnConn">連線</button>
-    </div>
-    <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
-      <span class="status-badge" id="status">未連線</span>
-      <small style="color:#888">broker.emqx.io:8084</small>
+    <div class="conn-row">
+      <input type="text" id="base" value="4125252" placeholder="Topic Base">
+      <input type="password" id="key" value="9527" placeholder="Key" style="max-width:80px">
+      <button class="btn-main" id="btnConn">連線</button>
     </div>
   </div>
 
   <div class="card">
-    <h2><span>📊</span> 環境監測</h2>
+    <h2>📊 環境數據</h2>
     <div class="sensor-grid">
-      <div class="sensor-item">
-        <div><div class="sensor-val" id="t">--</div><div class="sensor-label">溫度 (°C)</div></div>
-        <span>🌡</span>
+      <div class="sensor-box">
+        <div>
+          <div class="s-val"><span id="t">--</span><small>°C</small></div>
+          <div class="s-label">溫度</div>
+        </div>
+        <div class="s-icon">🌡</div>
       </div>
-      <div class="sensor-item">
-        <div><div class="sensor-val" id="h">--</div><div class="sensor-label">濕度 (%)</div></div>
-        <span>💧</span>
+      <div class="sensor-box">
+        <div>
+          <div class="s-val"><span id="h">--</span><small>%</small></div>
+          <div class="s-label">濕度</div>
+        </div>
+        <div class="s-icon">💧</div>
       </div>
-      <div class="sensor-item">
-        <div><div class="sensor-val" id="co2">--</div><div class="sensor-label">CO₂ (ppm)</div></div>
-        <span>☁️</span>
+      <div class="sensor-box">
+        <div>
+          <div class="s-val"><span id="co2">--</span><small>ppm</small></div>
+          <div class="s-label">CO₂ 濃度</div>
+        </div>
+        <div class="s-icon">☁️</div>
       </div>
-      <div class="sensor-item">
-        <div><div class="sensor-val" id="lux">--</div><div class="sensor-label">亮度 (%)</div></div>
-        <span>☀️</span>
+      <div class="sensor-box">
+        <div>
+          <div class="s-val"><span id="lux">--</span><small>%</small></div>
+          <div class="s-label">光照度</div>
+        </div>
+        <div class="s-icon">☀️</div>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <h2><span>💡</span> 植物燈控制</h2>
+    <h2>💡 植物燈控制 (UART)</h2>
     
-    <div class="slider-group">
-      <div class="slider-header"><span>亮度 (Brightness)</span><span id="briVal">50%</span></div>
+    <div class="slider-container">
+      <div class="slider-info">
+        <span>亮度 (Brightness)</span>
+        <span style="color:var(--primary)" id="briVal">50%</span>
+      </div>
       <input type="range" id="bri" min="0" max="100" value="50">
     </div>
 
-    <div class="slider-group">
-      <div class="slider-header"><span>光譜 (Spectrum)</span><span id="specVal">1</span></div>
+    <div class="slider-container">
+      <div class="slider-info">
+        <span>光譜 (Spectrum)</span>
+        <span style="color:var(--primary)" id="specVal">1</span>
+      </div>
       <input type="range" id="spec" min="1" max="21" value="1">
     </div>
 
-    <button class="btn-power" id="btnPower">🔌 電源開關 (Toggle)</button>
+    <button class="btn-power" id="btnPower">
+      <span style="font-size:20px">⏻</span> 電源總開關 (Toggle)
+    </button>
   </div>
 
   <div class="card">
-    <h2><span>⚙️</span> 設備控制 (繼電器)</h2>
-    <div class="relay-grid">
-      <div class="relay-item">
-        <span class="relay-name">進風扇</span>
+    <h2>⚙️ 設備開關 (GPIO)</h2>
+    <div class="device-list">
+      
+      <div class="device-row">
+        <div class="d-name"><span class="d-icon">🌫</span> 加濕器 (Mist)</div>
+        <label class="switch">
+          <input type="checkbox" id="sw_mist">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="device-row">
+        <div class="d-name"><span class="d-icon">🍃</span> 進風扇 (IN)</div>
         <label class="switch">
           <input type="checkbox" id="sw_fan_in">
           <span class="slider"></span>
         </label>
       </div>
-      <div class="relay-item">
-        <span class="relay-name">排風扇</span>
+
+      <div class="device-row">
+        <div class="d-name"><span class="d-icon">🌪</span> 排風扇 (OUT)</div>
         <label class="switch">
           <input type="checkbox" id="sw_fan_out">
           <span class="slider"></span>
         </label>
       </div>
-      <div class="relay-item">
-        <span class="relay-name">水泵</span>
+
+      <div class="device-row">
+        <div class="d-name"><span class="d-icon">🚰</span> 水泵 (Pump)</div>
         <label class="switch">
           <input type="checkbox" id="sw_pump">
           <span class="slider"></span>
         </label>
       </div>
-      <div class="relay-item">
-        <span class="relay-name">輔助/保留</span>
+
+      <div class="device-row">
+        <div class="d-name"><span class="d-icon">🔧</span> 輔助/保留 (Aux)</div>
         <label class="switch">
           <input type="checkbox" id="sw_aux">
           <span class="slider"></span>
         </label>
       </div>
+
     </div>
   </div>
 
-  <div class="card">
-    <h2 onclick="document.getElementById('debug').style.display='block'" style="cursor:pointer">🐞 Debug Info</h2>
-    <pre id="debug" style="display:none">Waiting...</pre>
+  <div style="text-align:center; margin-bottom:40px;">
+    <a href="#" onclick="$('debug').style.display='block';return false;" style="color:#999;font-size:12px;text-decoration:none">Show Debug Log</a>
+    <pre id="debug"></pre>
   </div>
+
 </div>
 
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -156,20 +335,25 @@ pre{background:#222;color:#0f0;padding:10px;border-radius:8px;font-size:11px;ove
 let client = null;
 const $ = (id) => document.getElementById(id);
 
-// 讀取設定
+// 讀取 Topic 與 Key
 function getTopic(){ return $("base").value.trim(); }
 function getKey(){ return $("key").value.trim(); }
 
-// 發送指令
+// 發送 MQTT 指令
 function pub(op, val){
-  if(!client || !client.connected) return;
+  if(!client || !client.connected) {
+    alert("尚未連線至 MQTT Broker！");
+    return;
+  }
   const topic = getTopic() + "/cmd";
   const payload = JSON.stringify({ key: getKey(), op: op, v: val });
   client.publish(topic, payload);
-  console.log("Sent:", payload);
+  console.log("Send:", payload);
 }
 
-// UI 綁定
+// === UI 事件綁定 ===
+
+// 1. 燈光 Slider
 $("bri").onchange = (e) => pub("bright_pct", parseInt(e.target.value));
 $("bri").oninput = (e) => $("briVal").innerText = e.target.value + "%";
 
@@ -178,20 +362,27 @@ $("spec").oninput = (e) => $("specVal").innerText = e.target.value;
 
 $("btnPower").onclick = () => pub("power", 1);
 
-// 繼電器開關綁定 (True=1, False=0)
+// 2. 設備開關 (Checkbox change event)
+$("sw_mist").onchange    = (e) => pub("mist", e.target.checked ? 1 : 0);
 $("sw_fan_in").onchange  = (e) => pub("fan_in", e.target.checked ? 1 : 0);
 $("sw_fan_out").onchange = (e) => pub("fan_out", e.target.checked ? 1 : 0);
 $("sw_pump").onchange    = (e) => pub("pump", e.target.checked ? 1 : 0);
 $("sw_aux").onchange     = (e) => pub("aux", e.target.checked ? 1 : 0);
 
-// MQTT 連線
+// === MQTT 連線邏輯 ===
 $("btnConn").onclick = () => {
-  if(client){ client.end(); client = null; }
-  
+  if(client){ 
+    client.end(); 
+    client = null; 
+    $("status").innerText = "已斷線";
+    $("status").className = "badge";
+    return;
+  }
+
   const statusEl = $("status");
   statusEl.innerText = "連線中...";
-  statusEl.className = "status-badge";
-
+  
+  // 使用 WebSocket 連線 EMQX
   const clientId = "web_" + Math.random().toString(16).substr(2, 8);
   const url = "wss://broker.emqx.io:8084/mqtt";
 
@@ -199,41 +390,43 @@ $("btnConn").onclick = () => {
 
   client.on("connect", () => {
     statusEl.innerText = "已連線";
-    statusEl.className = "status-badge ok";
+    statusEl.className = "badge ok";
+    // 訂閱 ESP32 狀態 Topic
     client.subscribe(getTopic() + "/state");
   });
 
   client.on("message", (topic, msg) => {
     const str = msg.toString();
-    $("debug").innerText = str; // Debug 顯示原始 JSON
+    $("debug").innerText = str; // Debug 顯示
     
     try {
       const d = JSON.parse(str);
       
-      // 更新感測器
+      // 1. 更新感測器數值
       if(d.t !== undefined) $("t").innerText = d.t;
       if(d.h !== undefined) $("h").innerText = d.h;
       if(d.co2 !== undefined) $("co2").innerText = d.co2;
       if(d.lux_rel !== undefined) $("lux").innerText = d.lux_rel;
 
-      // 更新燈光拉桿 (如果不想讓網頁被動更新滑桿，可註解這兩行)
+      // 2. 更新燈光 UI (同步 ESP32 狀態)
       if(d.bri_pct !== undefined) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
       if(d.spec !== undefined) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
 
-      // 更新繼電器開關狀態 (重要: 讓網頁狀態跟旋鈕同步)
-      // 假設 JSON 回傳 fan_in: 1 或 0
-      // 注意：這裡依賴你在 ESP32 sendState() 裡添加了對應的 key
-      // 如果 ESP32 只回傳 fan_pct, 下面這行要改
+      // 3. 更新開關 UI (同步 ESP32 狀態)
+      if(d.mist !== undefined) $("sw_mist").checked = (d.mist > 0);
       if(d.fan_in !== undefined) $("sw_fan_in").checked = (d.fan_in > 0);
-      else if(d.fan_pct !== undefined) $("sw_fan_in").checked = (d.fan_pct > 0); // 相容舊版 key
-
       if(d.fan_out !== undefined) $("sw_fan_out").checked = (d.fan_out > 0);
       if(d.pump !== undefined) $("sw_pump").checked = (d.pump > 0);
-      else if(d.pump_pct !== undefined) $("sw_pump").checked = (d.pump_pct > 0);
-
       if(d.aux !== undefined) $("sw_aux").checked = (d.aux > 0);
 
-    } catch(e) { console.error(e); }
+    } catch(e) { 
+      console.error("JSON Error:", e); 
+    }
+  });
+
+  client.on("error", (err) => {
+    console.error(err);
+    statusEl.innerText = "錯誤";
   });
 };
 </script>
