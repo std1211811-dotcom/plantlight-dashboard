@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v7.3</title>
+<title>PlantLight Pro v8.0</title>
 
 <style>
 :root {
-  --bg: #77fff6; --card: #ffffff; --text: #1f2937;
+  --bg: #f2f4f6; --card: #ffffff; --text: #1f2937;
   --primary: #2563eb; --primary-light: #eff6ff;
   --success: #10b981; --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   --radius: 16px;
@@ -19,17 +19,17 @@ body {
 }
 .container { max-width: 500px; margin: 0 auto; padding: 16px; }
 
-/* Header */
+/* Header & Status */
 header { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px 20px; }
 h1 { margin: 0; font-size: 22px; color: #111; display: flex; align-items: center; gap: 8px; }
 .status-badge { padding: 6px 12px; border-radius: 99px; font-size: 13px; background: #e5e7eb; color: #666; font-weight: 600; }
 .status-badge.ok { background: #dcfce7; color: #166534; }
 
-/* Card */
+/* Cards & Layout */
 .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px; }
 h2 { margin: 0 0 16px; font-size: 15px; color: #6b7280; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
 
-/* 1. 連線設定 (手機優化) */
+/* Connection */
 .conn-form { display: flex; flex-direction: column; gap: 12px; }
 .input-group { position: relative; display: flex; align-items: center; }
 .input-icon { position: absolute; left: 12px; opacity: 0.5; }
@@ -43,17 +43,17 @@ input[type=text], input[type=password] {
   border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
 }
 
-/* 2. 環境數據 & 校正 */
+/* Sensor Grid */
 .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .s-box {
   background: #f9fafb; padding: 16px; border-radius: 16px; position: relative; border: 1px solid #f3f4f6;
 }
 .s-icon { position: absolute; top: 12px; right: 12px; font-size: 20px; opacity: 0.5; }
-.s-val { font-size: 28px; font-weight: 800; color: #1f2937; margin-top: 4px; }
+.s-val { font-size: 26px; font-weight: 800; color: #1f2937; margin-top: 4px; }
 .s-val small { font-size: 14px; font-weight: normal; color: #999; }
 .s-label { font-size: 13px; color: #666; }
 
-/* 校正工具 */
+/* Calibration */
 .cal-tools { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #eee; }
 .cal-btn-group { display: flex; gap: 10px; }
 .btn-cal {
@@ -62,7 +62,7 @@ input[type=text], input[type=password] {
 }
 .btn-cal:active { background: #f3f4f6; transform: scale(0.98); }
 
-/* 3. 燈光控制 */
+/* Sliders */
 .control-row { margin-bottom: 24px; }
 .control-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; color: #374151; }
 .val-tag { color: var(--primary); font-weight: 800; }
@@ -75,13 +75,12 @@ input[type=range]::-webkit-slider-thumb {
   font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
 }
 
-/* 4. 設備開關 */
+/* Switches */
 .device-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
 .device-item:last-child { border-bottom: none; }
 .d-info { display: flex; align-items: center; gap: 12px; }
 .d-icon { width: 36px; height: 36px; background: #f3f4f6; border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
 .d-name { font-weight: 600; color: #374151; }
-
 .switch { position: relative; display: inline-block; width: 50px; height: 30px; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #d1d5db; transition: .3s; border-radius: 30px; }
@@ -117,33 +116,42 @@ input:checked + .slider:before { transform: translateX(20px); }
   </div>
 
   <div class="card">
-    <h2>📊 環境數據</h2>
+    <h2>📊 空氣品質</h2>
     <div class="sensor-grid">
       <div class="s-box"><span class="s-icon">🌡</span><span class="s-label">溫度</span><div class="s-val"><span id="t">--</span><small>°C</small></div></div>
       <div class="s-box"><span class="s-icon">💧</span><span class="s-label">濕度</span><div class="s-val"><span id="h">--</span><small>%</small></div></div>
       <div class="s-box"><span class="s-icon">☁️</span><span class="s-label">CO₂</span><div class="s-val"><span id="co2">--</span><small>ppm</small></div></div>
       <div class="s-box"><span class="s-icon">☀️</span><span class="s-label">光照</span><div class="s-val"><span id="lux">--</span><small>%</small></div></div>
     </div>
-    
     <div class="cal-tools">
       <div class="cal-btn-group">
-        <button class="btn-cal" id="btnSetDark">🌑 設為暗場 (0%)</button>
-        <button class="btn-cal" id="btnSetBright">☀️ 設為亮場 (100%)</button>
+        <button class="btn-cal" id="btnSetDark">🌑 設為暗場</button>
+        <button class="btn-cal" id="btnSetBright">☀️ 設為亮場</button>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <h2>💡 植物燈控制 (UART)</h2>
+    <h2>🌱 土壤監測</h2>
+    <div class="sensor-grid">
+      <div class="s-box"><span class="s-icon">💧</span><span class="s-label">土壤濕度</span><div class="s-val"><span id="s_h">--</span><small>%</small></div></div>
+      <div class="s-box"><span class="s-icon">🌡</span><span class="s-label">土壤溫度</span><div class="s-val"><span id="s_t">--</span><small>°C</small></div></div>
+      <div class="s-box"><span class="s-icon">🧪</span><span class="s-label">酸鹼值 pH</span><div class="s-val"><span id="s_ph">--</span><small>pH</small></div></div>
+      <div class="s-box"><span class="s-icon">⚡</span><span class="s-label">電導率 EC</span><div class="s-val"><span id="s_ec">--</span><small>us</small></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💡 植物燈控制</h2>
     <div class="control-row">
-      <div class="control-header"><span>亮度 (Brightness)</span><span class="val-tag" id="briVal">50%</span></div>
+      <div class="control-header"><span>亮度</span><span class="val-tag" id="briVal">50%</span></div>
       <input type="range" id="bri" min="0" max="100" value="50">
     </div>
     <div class="control-row">
-      <div class="control-header"><span>光譜 (Spectrum)</span><span class="val-tag" id="specVal">1</span></div>
+      <div class="control-header"><span>光譜</span><span class="val-tag" id="specVal">1</span></div>
       <input type="range" id="spec" min="1" max="21" value="1">
     </div>
-    <button class="btn-power" id="btnPower"><span>⏻</span> 電源總開關 (Toggle)</button>
+    <button class="btn-power" id="btnPower"><span>⏻</span> 電源總開關</button>
   </div>
 
   <div class="card">
@@ -158,7 +166,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   </div>
 
   <div style="text-align:center;">
-    <a href="#" onclick="$('debug').style.display='block';return false;" style="color:#aaa;font-size:12px;text-decoration:none">顯示除錯</a>
+    <a href="#" onclick="$('debug').style.display='block';return false;" style="color:#aaa;font-size:12px;text-decoration:none">顯示除錯訊息</a>
     <pre id="debug"></pre>
   </div>
 </div>
@@ -202,12 +210,24 @@ $("btnConn").onclick = () => {
     try {
       const d = JSON.parse(msg.toString());
       $("debug").innerText = JSON.stringify(d, null, 2);
+      
+      // 空氣
       if(d.t !== undefined) $("t").innerText = d.t;
       if(d.h !== undefined) $("h").innerText = d.h;
       if(d.co2 !== undefined) $("co2").innerText = d.co2;
       if(d.lux_rel !== undefined) $("lux").innerText = d.lux_rel;
+      
+      // 土壤 (新增)
+      if(d.s_h !== undefined) $("s_h").innerText = d.s_h;
+      if(d.s_t !== undefined) $("s_t").innerText = d.s_t;
+      if(d.s_ph !== undefined) $("s_ph").innerText = d.s_ph;
+      if(d.s_ec !== undefined) $("s_ec").innerText = d.s_ec;
+
+      // 燈光
       if(d.bri_pct !== undefined) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
       if(d.spec !== undefined) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
+      
+      // 設備
       devs.forEach(dev => { if(d[dev] !== undefined) $("sw_"+dev).checked = (d[dev] > 0); });
     } catch(e) {}
   });
