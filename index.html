@@ -3,91 +3,97 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v9.1</title>
+<title>PlantLight Pro v9.5</title>
 
 <style>
 :root {
   --bg: #f4f7fa; --card: #fff; --text: #333;
-  --primary: #3b82f6; --success: #22c55e; --purple: #8b5cf6; --red: #ef4444;
+  --primary: #3b82f6; --success: #22c55e; --purple: #8b5cf6; --orange: #f97316;
   --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   --r: 12px;
 }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
-
 .container { width: 96%; margin: 0 auto; padding: 16px 0; }
+
+/* Grid Layout */
 .grid-layout { display: grid; gap: 16px; grid-template-columns: 1fr; }
 @media (min-width: 768px) { .grid-layout { grid-template-columns: 1fr 1fr; } }
 @media (min-width: 1200px) { .grid-layout { grid-template-columns: 1fr 1fr 1fr 1fr; } }
 
+/* Card & Header */
 .card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); padding: 20px; }
-h2 { margin: 0 0 15px; font-size: 14px; color: #888; text-transform: uppercase; font-weight: 700; display:flex; justify-content:space-between; }
+h2 { margin: 0 0 15px; font-size: 14px; color: #888; text-transform: uppercase; font-weight: 700; }
 header { display: flex; justify-content: space-between; align-items: center; padding: 0 10px 10px; }
 h1 { margin: 0; font-size: 24px; color: #111; }
-.badge { padding: 5px 10px; border-radius: 99px; font-size: 12px; background: #ddd; color: #666; font-weight: 600; }
+
+/* Status Badges */
+.status-group { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.badge { padding: 4px 10px; border-radius: 99px; font-size: 11px; background: #ddd; color: #666; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;}
 .badge.ok { background: #dcfce7; color: #15803d; }
+.badge.uptime { background: #f3e8ff; color: #7e22ce; }
+.badge.time { background: #e0f2fe; color: #0369a1; }
 
-.conn-row { display: flex; gap: 8px; margin-bottom: 20px; }
-input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; flex: 1; }
-button { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-.btn-main { background: var(--primary); color: #fff; }
+/* Inputs & Buttons */
+.conn-row { display: flex; gap: 8px; margin-bottom: 20px; padding: 0 10px; }
+input[type=text], input[type=password], input[type=time] { padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+button { border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.btn-main { background: var(--primary); color: #fff; width: 100%; }
+.btn-sm { font-size: 12px; padding: 4px 8px; margin-left: 4px; background: #eff6ff; color: var(--primary); }
+.btn-cyc { font-size: 12px; padding: 4px 8px; margin-left: 4px; background: #ffedd5; color: var(--orange); }
 
+/* Sensors */
 .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.s-box { background: #f9fafb; padding: 12px; border-radius: 10px; position: relative; border: 1px solid #eee; }
+.s-box { background: #f9fafb; padding: 12px; border-radius: 10px; border: 1px solid #eee; position: relative; }
 .s-val { font-size: 24px; font-weight: 800; color: #333; }
 .s-label { font-size: 12px; color: #888; }
 .s-icon { position: absolute; top: 10px; right: 10px; font-size: 18px; opacity: 0.4; }
 
-/* 設備列樣式優化 */
+/* Device Row */
 .dev-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
 .dev-row:last-child { border-bottom: none; }
-.dev-left { display: flex; align-items: center; gap: 12px; flex: 1; }
-.dev-icon { width: 42px; height: 42px; background: #f3f4f6; border-radius: 8px; display: grid; place-items: center; font-size: 22px; }
-.dev-info { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-.dev-header { display: flex; align-items: center; gap: 8px; }
+.dev-left { display: flex; align-items: center; gap: 12px; }
+.dev-icon { width: 40px; height: 40px; background: #f3f4f6; border-radius: 8px; display: grid; place-items: center; font-size: 20px; }
 .dev-name { font-weight: 700; font-size: 15px; }
-
-/* 狀態標籤 */
-.tag-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag-group { display: flex; gap: 6px; margin-top: 4px; }
 .run-tag { font-size: 11px; background: #f3e8ff; color: #7e22ce; padding: 2px 6px; border-radius: 4px; display: none; }
 .rem-tag { font-size: 11px; background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; display: none; }
+.cyc-tag { font-size: 11px; background: #ffedd5; color: #c2410c; padding: 2px 6px; border-radius: 4px; display: none; }
 
-/* 按鈕群 */
-.btn-timer { 
-  background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe;
-  font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer; 
-}
-.btn-power { width: 100%; background: #111; color: #fff; margin-top: 10px; }
-
-.switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+/* Switch */
+.switch { position: relative; display: inline-block; width: 46px; height: 26px; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 34px; }
 .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
 input:checked + .slider { background-color: var(--success); }
 input:checked + .slider:before { transform: translateX(20px); }
 
-#debug { display: none; background: #111; color: #0f0; padding: 10px; margin-top: 20px; border-radius: 8px; font-size: 11px; white-space: pre-wrap; }
+/* Schedule Box */
+.sched-box { background: #f8fafc; padding: 12px; border-radius: 8px; margin-top: 15px; border: 1px dashed #cbd5e1; }
+.sched-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 </style>
 </head>
 <body>
 
 <div class="container">
   <header>
-    <h1>🌱 PlantLight Pro</h1>
-    <div id="status" class="badge">未連線</div>
+    <h1>🌱 PlantLight</h1>
+    <div class="status-group">
+      <div id="status" class="badge">未連線</div>
+      <div id="time" class="badge time">🕒 --:--</div>
+      <div id="uptime" class="badge uptime">🚀 --</div>
+    </div>
   </header>
 
-  <div style="padding: 0 10px;">
-    <div class="conn-row">
-      <input type="text" id="base" value="4125252" placeholder="Topic">
-      <input type="password" id="key" value="9527" placeholder="Key">
-      <button class="btn-main" id="btnConn">連線</button>
-    </div>
+  <div class="conn-row">
+    <input type="text" id="base" value="4125252" placeholder="Topic" style="flex:1">
+    <input type="password" id="key" value="9527" placeholder="Key" style="flex:1">
+    <button class="btn-main" id="btnConn" style="flex:0 0 80px">連線</button>
   </div>
 
   <div class="grid-layout">
     
     <div class="card">
-      <h2>📊 環境 (Air)</h2>
+      <h2>📊 空氣 (Air)</h2>
       <div class="sensor-grid">
         <div class="s-box"><div class="s-val"><span id="t">--</span><small>°C</small></div><div class="s-label">溫度</div><span class="s-icon">🌡</span></div>
         <div class="s-box"><div class="s-val"><span id="h">--</span><small>%</small></div><div class="s-label">濕度</div><span class="s-icon">💧</span></div>
@@ -112,24 +118,39 @@ input:checked + .slider:before { transform: translateX(20px); }
     </div>
 
     <div class="card">
-      <h2>💡 燈光參數</h2>
-      <div style="margin-bottom:15px">
-        <div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:5px"><span>亮度</span><span id="briVal" style="color:var(--primary)">50%</span></div>
+      <h2>💡 燈光 & 排程 (Schedule)</h2>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:14px;font-weight:700"><span>亮度</span><span id="briVal" style="color:var(--primary)">50%</span></div>
         <input type="range" id="bri" min="0" max="100" value="50" style="width:100%">
       </div>
       <div>
-        <div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:5px"><span>光譜</span><span id="specVal" style="color:var(--primary)">1</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:14px;font-weight:700"><span>光譜</span><span id="specVal" style="color:var(--primary)">1</span></div>
         <input type="range" id="spec" min="1" max="21" value="1" style="width:100%">
       </div>
-      <div style="display:flex; gap:10px; margin-top:20px">
-        <button onclick="pub('cal_dark',1)" style="flex:1;background:#fff;border:1px solid #ccc;color:#555;padding:8px">校正暗場</button>
-        <button onclick="pub('cal_bright',1)" style="flex:1;background:#fff;border:1px solid #ccc;color:#555;padding:8px">校正亮場</button>
+      
+      <div class="sched-box">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:700;font-size:14px;color:#555">📅 每日定時 (Daily)</span>
+          <label class="switch" style="transform:scale(0.8)"><input type="checkbox" id="sch_en" onchange="setSched()"><span class="slider"></span></label>
+        </div>
+        <div class="sched-row">
+          <span style="font-size:13px">開</span><input type="time" id="sch_on" value="08:00" style="flex:1">
+          <span style="font-size:13px">關</span><input type="time" id="sch_off" value="18:00" style="flex:1">
+          <button onclick="setSched()" style="background:var(--primary);color:#fff;font-size:12px">設定</button>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:15px">
+        <button onclick="pub('cal_dark',1)" style="flex:1;background:#fff;border:1px solid #ccc;color:#555;font-size:12px">校正暗場</button>
+        <button onclick="pub('cal_bright',1)" style="flex:1;background:#fff;border:1px solid #ccc;color:#555;font-size:12px">校正亮場</button>
       </div>
     </div>
 
-  </div> <div style="text-align:center; margin-top:20px">
-    <a href="#" onclick="$('debug').style.display='block';return false;" style="color:#aaa;font-size:12px;">Debug Log</a>
-    <pre id="debug"></pre>
+  </div>
+  
+  <div style="text-align:center; margin-top:20px">
+    <a href="#" onclick="$('debug').style.display='block';return false;" style="color:#aaa;font-size:12px;">Debug</a>
+    <pre id="debug" style="display:none;background:#111;color:#0f0;padding:10px;text-align:left"></pre>
   </div>
 </div>
 
@@ -143,65 +164,77 @@ const devices = [
   { id: "mist",    name: "加濕器", icon: "🌫" },
   { id: "fan_in",  name: "進風扇", icon: "🍃" },
   { id: "fan_out", name: "排風扇", icon: "🌪" },
-  { id: "pump",    name: "水泵",   icon: "🚰" },
+  { id: "pump",    name: "水泵",   icon: "🚰", cycle: true }, // ★ 水泵有循環功能
   { id: "aux",     name: "輔助",   icon: "🔧" }
 ];
 
+// 初始化設備列表
 const devContainer = $("dev-list");
 devices.forEach(d => {
+  let extraBtns = `<button class="btn-sm" onclick="setTimer('${d.id}')">⏱️</button>`;
+  if(d.cycle) extraBtns += `<button class="btn-cyc" onclick="setCycle('${d.id}')">🔄</button>`; // 循環按鈕
+
   const html = `
     <div class="dev-row">
       <div class="dev-left">
         <div class="dev-icon">${d.icon}</div>
         <div class="dev-info">
-          <div class="dev-header">
-            <div class="dev-name">${d.name}</div>
-            <button class="btn-timer" onclick="setTimer('${d.id}')">⏱ 設定定時</button>
-          </div>
+          <div class="dev-name">${d.name} ${extraBtns}</div>
           <div class="tag-group">
-            <span id="run_${d.id}" class="run-tag">--</span>
-            <span id="rem_${d.id}" class="rem-tag">--</span>
+            <span id="run_${d.id}" class="run-tag">00:00:00</span>
+            <span id="rem_${d.id}" class="rem-tag"></span>
+            <span id="cyc_${d.id}" class="cyc-tag">循環中</span>
           </div>
         </div>
       </div>
-      <label class="switch">
-        <input type="checkbox" id="sw_${d.id}" onchange="toggleDev('${d.id}', this.checked)">
-        <span class="slider"></span>
-      </label>
+      <label class="switch"><input type="checkbox" id="sw_${d.id}" onchange="toggleDev('${d.id}', this.checked)"><span class="slider"></span></label>
     </div>
   `;
   devContainer.insertAdjacentHTML('beforeend', html);
 });
 
-function pub(op, val, target=null){
+function pub(op, val, target=null, extra={}){
   if(!client || !client.connected) { alert("請先連線！"); return; }
-  const payload = { key: $("key").value.trim(), op: op, v: val };
+  const payload = { key: $("key").value.trim(), op: op, v: val, ...extra };
   if(target) payload.target = target;
   client.publish($("base").value.trim() + "/cmd", JSON.stringify(payload));
 }
 
 function toggleDev(id, checked) {
-  if (id === "light") { pub("power", 1); } 
-  else { pub("set", checked ? 1 : 0, id); }
+  if (id === "light") pub("power", 1); 
+  else pub("set", checked ? 1 : 0, id);
 }
 
 function setTimer(id) {
-  let min = prompt(`請輸入 [${id}] 幾分鐘後自動關閉？\n(輸入 0 為取消)`, "10");
-  if (min !== null) {
-    let val = parseInt(min);
-    if (!isNaN(val)) pub("timer", val, id);
+  let min = prompt(`[${id}] 倒數定時 (分鐘)：`, "10");
+  if (min != null) pub("timer", parseInt(min), id);
+}
+
+function setCycle(id) {
+  if(confirm(`啟動 [${id}] 循環模式 (開5分/停30分)？`)) {
+    pub("cycle", 1, id);
+  } else {
+    pub("cycle", 0, id); // 取消
   }
+}
+
+function setSched() {
+  const onT = $("sch_on").value.replace(":","");
+  const offT = $("sch_off").value.replace(":","");
+  const en = $("sch_en").checked ? 1 : 0;
+  // 發送排程指令 (op: sched_set)
+  pub("sched_set", en, null, { on: parseInt(onT), off: parseInt(offT) });
 }
 
 function fmtTime(s) {
   if(s <= 0) return "00:00:00";
-  const h = Math.floor(s / 3600).toString().padStart(2,'0');
-  const m = Math.floor((s % 3600) / 60).toString().padStart(2,'0');
-  const sec = (s % 60).toString().padStart(2,'0');
-  return `${h}:${m}:${sec}`;
+  const h = Math.floor(s/3600).toString().padStart(2,'0');
+  const m = Math.floor((s%3600)/60).toString().padStart(2,'0');
+  const sc = (s%60).toString().padStart(2,'0');
+  return `${h}:${m}:${sc}`;
 }
 
-// UI 綁定
+// UI Binding
 $("bri").onchange = (e) => pub("bright_pct", parseInt(e.target.value));
 $("bri").oninput = (e) => $("briVal").innerText = e.target.value + "%";
 $("spec").onchange = (e) => pub("spec", parseInt(e.target.value));
@@ -224,43 +257,39 @@ $("btnConn").onclick = () => {
       const d = JSON.parse(msg.toString());
       $("debug").innerText = JSON.stringify(d, null, 2);
 
+      // 全域資訊
+      if(d.uptime) $("uptime").innerText = "🚀 " + d.uptime;
+      if(d.time) $("time").innerText = "🕒 " + d.time;
+
+      // 感測器
       if(d.t) $("t").innerText = d.t; if(d.h) $("h").innerText = d.h;
       if(d.co2) $("co2").innerText = d.co2; if(d.lux_rel) $("lux").innerText = d.lux_rel;
       if(d.s_h) $("s_h").innerText = d.s_h; if(d.s_t) $("s_t").innerText = d.s_t;
       if(d.s_ph) $("s_ph").innerText = d.s_ph; if(d.s_ec) $("s_ec").innerText = d.s_ec;
+      
+      // 燈光與排程狀態
       if(d.bri_pct) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
       if(d.spec) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
+      if(d.sch_en !== undefined) $("sch_en").checked = (d.sch_en == 1);
+      if(d.sch_on) $("sch_on").value = d.sch_on;
+      if(d.sch_off) $("sch_off").value = d.sch_off;
 
+      // 設備狀態
       if (d.devs) {
         for (const [key, info] of Object.entries(d.devs)) {
-          // 開關
-          const sw = $("sw_" + key);
-          if (sw) sw.checked = (info.s === 1);
-
-          // 運行時間 (紫色)
+          const sw = $("sw_" + key); if (sw) sw.checked = (info.s === 1);
+          
           const runTag = $("run_" + key);
-          if (runTag) {
-            if (info.s === 1) {
-              runTag.style.display = "inline-block";
-              runTag.innerText = "已開 " + fmtTime(info.run);
-            } else {
-              runTag.style.display = "none";
-            }
-          }
-
-          // 倒數計時 (紅色)
+          if (runTag) { runTag.style.display = info.s ? "inline-block" : "none"; runTag.innerText = fmtTime(info.run); }
+          
           const remTag = $("rem_" + key);
-          if (remTag) {
-            if (info.rem > 0) {
-              remTag.style.display = "inline-block";
-              remTag.innerText = "剩餘 " + Math.ceil(info.rem/60) + "分";
-            } else {
-              remTag.style.display = "none";
-            }
-          }
+          if (remTag) { remTag.style.display = (info.rem > 0) ? "inline-block" : "none"; remTag.innerText = "剩 " + Math.ceil(info.rem/60) + "分"; }
+          
+          const cycTag = $("cyc_" + key);
+          if (cycTag) { cycTag.style.display = (info.cyc === 1) ? "inline-block" : "none"; }
         }
       }
-    } catch(e) {}
+    } catch(e) { console.error(e); }
   });
 };
 </script>
