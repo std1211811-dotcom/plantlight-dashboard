@@ -3,92 +3,87 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v8.0</title>
+<title>PlantLight Pro v9.0</title>
 
 <style>
 :root {
-  --bg: #f2f4f6; --card: #ffffff; --text: #1f2937;
-  --primary: #2563eb; --primary-light: #eff6ff;
-  --success: #10b981; --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-  --radius: 16px;
+  --bg: #f4f7fa; --card: #fff; --text: #333;
+  --primary: #3b82f6; --success: #22c55e; --purple: #8b5cf6; --red: #ef4444;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  --r: 12px;
 }
-body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  -webkit-tap-highlight-color: transparent; padding-bottom: 50px;
-}
-.container { max-width: 500px; margin: 0 auto; padding: 16px; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
 
-/* Header & Status */
-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px 20px; }
-h1 { margin: 0; font-size: 22px; color: #111; display: flex; align-items: center; gap: 8px; }
-.status-badge { padding: 6px 12px; border-radius: 99px; font-size: 13px; background: #e5e7eb; color: #666; font-weight: 600; }
-.status-badge.ok { background: #dcfce7; color: #166534; }
-
-/* Cards & Layout */
-.card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px; }
-h2 { margin: 0 0 16px; font-size: 15px; color: #6b7280; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
-
-/* Connection */
-.conn-form { display: flex; flex-direction: column; gap: 12px; }
-.input-group { position: relative; display: flex; align-items: center; }
-.input-icon { position: absolute; left: 12px; opacity: 0.5; }
-input[type=text], input[type=password] {
-  width: 100%; padding: 12px 12px 12px 40px; border: 1px solid #e5e7eb;
-  border-radius: 12px; background: #f9fafb; font-size: 16px; outline: none; box-sizing: border-box;
-}
-.conn-row-bottom { display: flex; gap: 10px; }
-#btnConn {
-  background: var(--primary); color: white; border: none; padding: 0 24px;
-  border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
+/* ★ 滿版設定 */
+.container {
+  width: 96%; /* 幾乎佔滿寬度 */
+  margin: 0 auto;
+  padding: 16px 0;
 }
 
-/* Sensor Grid */
-.sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.s-box {
-  background: #f9fafb; padding: 16px; border-radius: 16px; position: relative; border: 1px solid #f3f4f6;
-}
-.s-icon { position: absolute; top: 12px; right: 12px; font-size: 20px; opacity: 0.5; }
-.s-val { font-size: 26px; font-weight: 800; color: #1f2937; margin-top: 4px; }
-.s-val small { font-size: 14px; font-weight: normal; color: #999; }
-.s-label { font-size: 13px; color: #666; }
-
-/* Calibration */
-.cal-tools { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #eee; }
-.cal-btn-group { display: flex; gap: 10px; }
-.btn-cal {
-  flex: 1; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 10px;
-  color: #555; font-size: 13px; font-weight: 600; cursor: pointer;
-}
-.btn-cal:active { background: #f3f4f6; transform: scale(0.98); }
-
-/* Sliders */
-.control-row { margin-bottom: 24px; }
-.control-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; color: #374151; }
-.val-tag { color: var(--primary); font-weight: 800; }
-input[type=range] { -webkit-appearance: none; width: 100%; height: 8px; background: #e5e7eb; border-radius: 8px; outline: none; }
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 28px; height: 28px; background: #fff; border: 6px solid var(--primary); border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-}
-.btn-power {
-  width: 100%; padding: 16px; background: #1f2937; color: #fff; border: none; border-radius: 14px;
-  font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+/* 網格佈局 */
+.grid-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr; /* 手機預設 1 欄 */
 }
 
-/* Switches */
-.device-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
-.device-item:last-child { border-bottom: none; }
-.d-info { display: flex; align-items: center; gap: 12px; }
-.d-icon { width: 36px; height: 36px; background: #f3f4f6; border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
-.d-name { font-weight: 600; color: #374151; }
-.switch { position: relative; display: inline-block; width: 50px; height: 30px; }
+/* 電腦版：依照螢幕寬度自動調整欄數 (Responsive) */
+@media (min-width: 768px) { .grid-layout { grid-template-columns: 1fr 1fr; } } /* 平板 2 欄 */
+@media (min-width: 1200px) { .grid-layout { grid-template-columns: 1fr 1fr 1fr 1fr; } } /* 大螢幕 4 欄 */
+
+/* 卡片 */
+.card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); padding: 20px; }
+h2 { margin: 0 0 15px; font-size: 14px; color: #888; text-transform: uppercase; font-weight: 700; display:flex; justify-content:space-between; }
+
+/* 頂部 Header */
+header { display: flex; justify-content: space-between; align-items: center; padding: 0 10px 10px; }
+h1 { margin: 0; font-size: 24px; color: #111; }
+.badge { padding: 5px 10px; border-radius: 99px; font-size: 12px; background: #ddd; color: #666; font-weight: 600; }
+.badge.ok { background: #dcfce7; color: #15803d; }
+
+/* 連線區 */
+.conn-row { display: flex; gap: 8px; margin-bottom: 20px; }
+input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; flex: 1; }
+button { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.btn-main { background: var(--primary); color: #fff; }
+
+/* 感測器 */
+.sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.s-box { background: #f9fafb; padding: 12px; border-radius: 10px; position: relative; border: 1px solid #eee; }
+.s-val { font-size: 24px; font-weight: 800; color: #333; }
+.s-label { font-size: 12px; color: #888; }
+.s-icon { position: absolute; top: 10px; right: 10px; font-size: 18px; opacity: 0.4; }
+
+/* 設備控制列 */
+.dev-row { 
+  display: flex; justify-content: space-between; align-items: center; 
+  padding: 12px 0; border-bottom: 1px solid #f0f0f0; 
+}
+.dev-row:last-child { border-bottom: none; }
+.dev-left { display: flex; align-items: center; gap: 12px; }
+.dev-icon { width: 40px; height: 40px; background: #f3f4f6; border-radius: 8px; display: grid; place-items: center; font-size: 20px; }
+.dev-info { display: flex; flex-direction: column; }
+.dev-name { font-weight: 700; font-size: 15px; }
+
+/* 運行時間與倒數標籤 */
+.tag-group { display: flex; gap: 6px; margin-top: 4px; }
+.run-tag { font-size: 11px; background: #f3e8ff; color: #7e22ce; padding: 2px 6px; border-radius: 4px; display: none; }
+.rem-tag { font-size: 11px; background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; display: none; }
+
+/* 按鈕群 */
+.btn-timer { background: #eff6ff; color: var(--primary); font-size: 12px; padding: 4px 8px; margin-left: 5px; }
+.btn-power { width: 100%; background: #111; color: #fff; margin-top: 10px; }
+
+/* 開關 */
+.switch { position: relative; display: inline-block; width: 46px; height: 26px; }
 .switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #d1d5db; transition: .3s; border-radius: 30px; }
-.slider:before { position: absolute; content: ""; height: 24px; width: 24px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
 input:checked + .slider { background-color: var(--success); }
 input:checked + .slider:before { transform: translateX(20px); }
 
-#debug { background: #111; color: #0f0; padding: 12px; border-radius: 8px; font-size: 11px; display: none; white-space: pre-wrap; margin-top: 20px; }
+#debug { display: none; background: #111; color: #0f0; padding: 10px; margin-top: 20px; border-radius: 8px; font-size: 11px; white-space: pre-wrap; }
 </style>
 </head>
 <body>
@@ -96,77 +91,61 @@ input:checked + .slider:before { transform: translateX(20px); }
 <div class="container">
   <header>
     <h1>🌱 PlantLight Pro</h1>
-    <div id="status" class="status-badge">未連線</div>
+    <div id="status" class="badge">未連線</div>
   </header>
 
-  <div class="card">
-    <div class="conn-form">
-      <div class="input-group">
-        <span class="input-icon">📡</span>
-        <input type="text" id="base" value="4125252" placeholder="Topic ID">
-      </div>
-      <div class="conn-row-bottom">
-        <div class="input-group" style="flex:1">
-          <span class="input-icon">🔑</span>
-          <input type="password" id="key" value="9527" placeholder="Key">
-        </div>
-        <button id="btnConn">連線</button>
-      </div>
+  <div style="padding: 0 10px;">
+    <div class="conn-row">
+      <input type="text" id="base" value="4125252" placeholder="Topic">
+      <input type="password" id="key" value="9527" placeholder="Key">
+      <button class="btn-main" id="btnConn">連線</button>
     </div>
   </div>
 
-  <div class="card">
-    <h2>📊 空氣品質</h2>
-    <div class="sensor-grid">
-      <div class="s-box"><span class="s-icon">🌡</span><span class="s-label">溫度</span><div class="s-val"><span id="t">--</span><small>°C</small></div></div>
-      <div class="s-box"><span class="s-icon">💧</span><span class="s-label">濕度</span><div class="s-val"><span id="h">--</span><small>%</small></div></div>
-      <div class="s-box"><span class="s-icon">☁️</span><span class="s-label">CO₂</span><div class="s-val"><span id="co2">--</span><small>ppm</small></div></div>
-      <div class="s-box"><span class="s-icon">☀️</span><span class="s-label">光照</span><div class="s-val"><span id="lux">--</span><small>%</small></div></div>
-    </div>
-    <div class="cal-tools">
-      <div class="cal-btn-group">
-        <button class="btn-cal" id="btnSetDark">🌑 設為暗場</button>
-        <button class="btn-cal" id="btnSetBright">☀️ 設為亮場</button>
+  <div class="grid-layout">
+    
+    <div class="card">
+      <h2>📊 環境 (Air)</h2>
+      <div class="sensor-grid">
+        <div class="s-box"><div class="s-val"><span id="t">--</span><small>°C</small></div><div class="s-label">溫度</div><span class="s-icon">🌡</span></div>
+        <div class="s-box"><div class="s-val"><span id="h">--</span><small>%</small></div><div class="s-label">濕度</div><span class="s-icon">💧</span></div>
+        <div class="s-box"><div class="s-val"><span id="co2">--</span></div><div class="s-label">CO2</div><span class="s-icon">☁️</span></div>
+        <div class="s-box"><div class="s-val"><span id="lux">--</span><small>%</small></div><div class="s-label">光照</div><span class="s-icon">☀️</span></div>
       </div>
     </div>
-  </div>
 
-  <div class="card">
-    <h2>🌱 土壤監測</h2>
-    <div class="sensor-grid">
-      <div class="s-box"><span class="s-icon">💧</span><span class="s-label">土壤濕度</span><div class="s-val"><span id="s_h">--</span><small>%</small></div></div>
-      <div class="s-box"><span class="s-icon">🌡</span><span class="s-label">土壤溫度</span><div class="s-val"><span id="s_t">--</span><small>°C</small></div></div>
-      <div class="s-box"><span class="s-icon">🧪</span><span class="s-label">酸鹼值 pH</span><div class="s-val"><span id="s_ph">--</span><small>pH</small></div></div>
-      <div class="s-box"><span class="s-icon">⚡</span><span class="s-label">電導率 EC</span><div class="s-val"><span id="s_ec">--</span><small>us</small></div></div>
+    <div class="card">
+      <h2>🌱 土壤 (Soil)</h2>
+      <div class="sensor-grid">
+        <div class="s-box"><div class="s-val"><span id="s_h">--</span><small>%</small></div><div class="s-label">濕度</div><span class="s-icon">💧</span></div>
+        <div class="s-box"><div class="s-val"><span id="s_t">--</span><small>°C</small></div><div class="s-label">溫度</div><span class="s-icon">🌡</span></div>
+        <div class="s-box"><div class="s-val"><span id="s_ph">--</span></div><div class="s-label">PH</div><span class="s-icon">🧪</span></div>
+        <div class="s-box"><div class="s-val"><span id="s_ec">--</span></div><div class="s-label">EC</div><span class="s-icon">⚡</span></div>
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <h2>💡 植物燈控制</h2>
-    <div class="control-row">
-      <div class="control-header"><span>亮度</span><span class="val-tag" id="briVal">50%</span></div>
-      <input type="range" id="bri" min="0" max="100" value="50">
-    </div>
-    <div class="control-row">
-      <div class="control-header"><span>光譜</span><span class="val-tag" id="specVal">1</span></div>
-      <input type="range" id="spec" min="1" max="21" value="1">
-    </div>
-    <button class="btn-power" id="btnPower"><span>⏻</span> 電源總開關</button>
-  </div>
+    <div class="card" style="grid-column: span 1; min-width: 300px;">
+      <h2>⚙️ 設備控制</h2>
+      <div id="dev-list"></div> </div>
 
-  <div class="card">
-    <h2>⚙️ 設備控制</h2>
-    <div class="device-list">
-      <div class="device-item"><div class="d-info"><div class="d-icon">🌫</div><div class="d-name">加濕器</div></div><label class="switch"><input type="checkbox" id="sw_mist"><span class="slider"></span></label></div>
-      <div class="device-item"><div class="d-info"><div class="d-icon">🍃</div><div class="d-name">進風扇</div></div><label class="switch"><input type="checkbox" id="sw_fan_in"><span class="slider"></span></label></div>
-      <div class="device-item"><div class="d-info"><div class="d-icon">🌪</div><div class="d-name">排風扇</div></div><label class="switch"><input type="checkbox" id="sw_fan_out"><span class="slider"></span></label></div>
-      <div class="device-item"><div class="d-info"><div class="d-icon">🚰</div><div class="d-name">水泵</div></div><label class="switch"><input type="checkbox" id="sw_pump"><span class="slider"></span></label></div>
-      <div class="device-item"><div class="d-info"><div class="d-icon">🔧</div><div class="d-name">輔助</div></div><label class="switch"><input type="checkbox" id="sw_aux"><span class="slider"></span></label></div>
+    <div class="card">
+      <h2>💡 燈光參數</h2>
+      <div style="margin-bottom:15px">
+        <div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:5px"><span>亮度</span><span id="briVal" style="color:var(--primary)">50%</span></div>
+        <input type="range" id="bri" min="0" max="100" value="50" style="width:100%">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:5px"><span>光譜</span><span id="specVal" style="color:var(--primary)">1</span></div>
+        <input type="range" id="spec" min="1" max="21" value="1" style="width:100%">
+      </div>
+      <div style="display:flex; gap:10px; margin-top:20px">
+        <button onclick="pub('cal_dark',1)" style="flex:1;background:#fff;border:1px solid #ccc;color:#555">校正暗場</button>
+        <button onclick="pub('cal_bright',1)" style="flex:1;background:#fff;border:1px solid #ccc;color:#555">校正亮場</button>
+      </div>
     </div>
-  </div>
 
-  <div style="text-align:center;">
-    <a href="#" onclick="$('debug').style.display='block';return false;" style="color:#aaa;font-size:12px;text-decoration:none">顯示除錯訊息</a>
+  </div> <div style="text-align:center; margin-top:20px">
+    <a href="#" onclick="$('debug').style.display='block';return false;" style="color:#aaa;font-size:12px;">Debug Log</a>
     <pre id="debug"></pre>
   </div>
 </div>
@@ -176,33 +155,94 @@ input:checked + .slider:before { transform: translateX(20px); }
 let client = null;
 const $ = (id) => document.getElementById(id);
 
-function pub(op, val){
+// 定義設備列表 (對應 ESP32 的 name)
+const devices = [
+  { id: "light",   name: "植物燈", icon: "💡" }, // 特殊處理
+  { id: "mist",    name: "加濕器", icon: "🌫" },
+  { id: "fan_in",  name: "進風扇", icon: "🍃" },
+  { id: "fan_out", name: "排風扇", icon: "🌪" },
+  { id: "pump",    name: "水泵",   icon: "🚰" },
+  { id: "aux",     name: "輔助",   icon: "🔧" }
+];
+
+// 初始化設備列表 UI
+const devContainer = $("dev-list");
+devices.forEach(d => {
+  const html = `
+    <div class="dev-row">
+      <div class="dev-left">
+        <div class="dev-icon">${d.icon}</div>
+        <div class="dev-info">
+          <div class="dev-name">
+            ${d.name} 
+            <button class="btn-timer" onclick="setTimer('${d.id}')">⏱️</button>
+          </div>
+          <div class="tag-group">
+            <span id="run_${d.id}" class="run-tag">00:00:00</span>
+            <span id="rem_${d.id}" class="rem-tag">剩餘 5分</span>
+          </div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="sw_${d.id}" onchange="toggleDev('${d.id}', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+  `;
+  devContainer.insertAdjacentHTML('beforeend', html);
+});
+
+function pub(op, val, target=null){
   if(!client || !client.connected) { alert("請先連線！"); return; }
-  const topic = $("base").value.trim() + "/cmd";
-  const payload = JSON.stringify({ key: $("key").value.trim(), op: op, v: val });
-  client.publish(topic, payload);
+  const payload = { key: $("key").value.trim(), op: op, v: val };
+  if(target) payload.target = target;
+  client.publish($("base").value.trim() + "/cmd", JSON.stringify(payload));
 }
 
+function toggleDev(id, checked) {
+  // 燈光開關用 power 指令，其他用 set 指令
+  if (id === "light") {
+    pub("power", 1); 
+    // 燈光是 Toggle，但我們無法確知硬體狀態，這裡假設切換成功
+    // 實際狀態會等 MQTT 回傳來更新 UI
+  } else {
+    pub("set", checked ? 1 : 0, id);
+  }
+}
+
+function setTimer(id) {
+  let min = prompt(`請輸入 [${id}] 的倒數時間 (分鐘)：`, "10");
+  if (min && min > 0) {
+    pub("timer", parseInt(min), id);
+  } else if (min == "0") {
+    pub("timer", 0, id); // 取消定時
+  }
+}
+
+// 格式化秒數為 HH:MM:SS
+function fmtTime(s) {
+  if(s <= 0) return "00:00:00";
+  const h = Math.floor(s / 3600).toString().padStart(2,'0');
+  const m = Math.floor((s % 3600) / 60).toString().padStart(2,'0');
+  const sec = (s % 60).toString().padStart(2,'0');
+  return `${h}:${m}:${sec}`;
+}
+
+// UI 綁定
 $("bri").onchange = (e) => pub("bright_pct", parseInt(e.target.value));
 $("bri").oninput = (e) => $("briVal").innerText = e.target.value + "%";
 $("spec").onchange = (e) => pub("spec", parseInt(e.target.value));
 $("spec").oninput = (e) => $("specVal").innerText = e.target.value;
-$("btnPower").onclick = () => pub("power", 1);
-$("btnSetDark").onclick = () => pub("cal_dark", 1);
-$("btnSetBright").onclick = () => pub("cal_bright", 1);
-
-const devs = ["mist", "fan_in", "fan_out", "pump", "aux"];
-devs.forEach(d => { $("sw_"+d).onchange = (e) => pub(d, e.target.checked ? 1 : 0); });
 
 $("btnConn").onclick = () => {
   const btn = $("btnConn"); const badge = $("status");
-  if(client){ client.end(); client = null; btn.innerText = "連線"; badge.innerText = "未連線"; badge.className = "status-badge"; return; }
+  if(client){ client.end(); client = null; btn.innerText = "連線"; badge.innerText = "未連線"; badge.className = "badge"; return; }
 
   btn.innerText = "...";
   client = mqtt.connect("wss://broker.emqx.io:8084/mqtt", { clientId: "web_" + Math.random().toString(16).substr(2, 8) });
 
   client.on("connect", () => {
-    btn.innerText = "斷線"; badge.innerText = "已連線"; badge.className = "status-badge ok";
+    btn.innerText = "斷線"; badge.innerText = "已連線"; badge.className = "badge ok";
     client.subscribe($("base").value.trim() + "/state");
   });
 
@@ -210,26 +250,47 @@ $("btnConn").onclick = () => {
     try {
       const d = JSON.parse(msg.toString());
       $("debug").innerText = JSON.stringify(d, null, 2);
-      
-      // 空氣
-      if(d.t !== undefined) $("t").innerText = d.t;
-      if(d.h !== undefined) $("h").innerText = d.h;
-      if(d.co2 !== undefined) $("co2").innerText = d.co2;
-      if(d.lux_rel !== undefined) $("lux").innerText = d.lux_rel;
-      
-      // 土壤 (新增)
-      if(d.s_h !== undefined) $("s_h").innerText = d.s_h;
-      if(d.s_t !== undefined) $("s_t").innerText = d.s_t;
-      if(d.s_ph !== undefined) $("s_ph").innerText = d.s_ph;
-      if(d.s_ec !== undefined) $("s_ec").innerText = d.s_ec;
 
-      // 燈光
-      if(d.bri_pct !== undefined) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
-      if(d.spec !== undefined) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
-      
-      // 設備
-      devs.forEach(dev => { if(d[dev] !== undefined) $("sw_"+dev).checked = (d[dev] > 0); });
-    } catch(e) {}
+      // 環境
+      if(d.t) $("t").innerText = d.t; if(d.h) $("h").innerText = d.h;
+      if(d.co2) $("co2").innerText = d.co2; if(d.lux_rel) $("lux").innerText = d.lux_rel;
+      if(d.s_h) $("s_h").innerText = d.s_h; if(d.s_t) $("s_t").innerText = d.s_t;
+      if(d.s_ph) $("s_ph").innerText = d.s_ph; if(d.s_ec) $("s_ec").innerText = d.s_ec;
+      if(d.bri_pct) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
+      if(d.spec) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
+
+      // 設備狀態 (devs 物件)
+      if (d.devs) {
+        for (const [key, info] of Object.entries(d.devs)) {
+          // 1. 更新開關
+          const sw = $("sw_" + key);
+          if (sw) sw.checked = (info.s === 1);
+
+          // 2. 更新運行時間 (紫色標籤)
+          const runTag = $("run_" + key);
+          if (runTag) {
+            if (info.s === 1) {
+              runTag.style.display = "inline-block";
+              runTag.innerText = "已開 " + fmtTime(info.run);
+            } else {
+              runTag.style.display = "none";
+            }
+          }
+
+          // 3. 更新倒數計時 (紅色標籤)
+          const remTag = $("rem_" + key);
+          if (remTag) {
+            if (info.rem > 0) {
+              remTag.style.display = "inline-block";
+              remTag.innerText = "剩餘 " + Math.ceil(info.rem/60) + "分";
+            } else {
+              remTag.style.display = "none";
+            }
+          }
+        }
+      }
+
+    } catch(e) { console.error(e); }
   });
 };
 </script>
