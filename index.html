@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v9.0</title>
+<title>PlantLight Pro v9.1</title>
 
 <style>
 :root {
@@ -14,69 +14,51 @@
 }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
 
-/* ★ 滿版設定 */
-.container {
-  width: 96%; /* 幾乎佔滿寬度 */
-  margin: 0 auto;
-  padding: 16px 0;
-}
+.container { width: 96%; margin: 0 auto; padding: 16px 0; }
+.grid-layout { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 768px) { .grid-layout { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1200px) { .grid-layout { grid-template-columns: 1fr 1fr 1fr 1fr; } }
 
-/* 網格佈局 */
-.grid-layout {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: 1fr; /* 手機預設 1 欄 */
-}
-
-/* 電腦版：依照螢幕寬度自動調整欄數 (Responsive) */
-@media (min-width: 768px) { .grid-layout { grid-template-columns: 1fr 1fr; } } /* 平板 2 欄 */
-@media (min-width: 1200px) { .grid-layout { grid-template-columns: 1fr 1fr 1fr 1fr; } } /* 大螢幕 4 欄 */
-
-/* 卡片 */
 .card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); padding: 20px; }
 h2 { margin: 0 0 15px; font-size: 14px; color: #888; text-transform: uppercase; font-weight: 700; display:flex; justify-content:space-between; }
-
-/* 頂部 Header */
 header { display: flex; justify-content: space-between; align-items: center; padding: 0 10px 10px; }
 h1 { margin: 0; font-size: 24px; color: #111; }
 .badge { padding: 5px 10px; border-radius: 99px; font-size: 12px; background: #ddd; color: #666; font-weight: 600; }
 .badge.ok { background: #dcfce7; color: #15803d; }
 
-/* 連線區 */
 .conn-row { display: flex; gap: 8px; margin-bottom: 20px; }
 input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; flex: 1; }
 button { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; }
 .btn-main { background: var(--primary); color: #fff; }
 
-/* 感測器 */
 .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .s-box { background: #f9fafb; padding: 12px; border-radius: 10px; position: relative; border: 1px solid #eee; }
 .s-val { font-size: 24px; font-weight: 800; color: #333; }
 .s-label { font-size: 12px; color: #888; }
 .s-icon { position: absolute; top: 10px; right: 10px; font-size: 18px; opacity: 0.4; }
 
-/* 設備控制列 */
-.dev-row { 
-  display: flex; justify-content: space-between; align-items: center; 
-  padding: 12px 0; border-bottom: 1px solid #f0f0f0; 
-}
+/* 設備列樣式優化 */
+.dev-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
 .dev-row:last-child { border-bottom: none; }
-.dev-left { display: flex; align-items: center; gap: 12px; }
-.dev-icon { width: 40px; height: 40px; background: #f3f4f6; border-radius: 8px; display: grid; place-items: center; font-size: 20px; }
-.dev-info { display: flex; flex-direction: column; }
+.dev-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+.dev-icon { width: 42px; height: 42px; background: #f3f4f6; border-radius: 8px; display: grid; place-items: center; font-size: 22px; }
+.dev-info { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.dev-header { display: flex; align-items: center; gap: 8px; }
 .dev-name { font-weight: 700; font-size: 15px; }
 
-/* 運行時間與倒數標籤 */
-.tag-group { display: flex; gap: 6px; margin-top: 4px; }
+/* 狀態標籤 */
+.tag-group { display: flex; gap: 6px; flex-wrap: wrap; }
 .run-tag { font-size: 11px; background: #f3e8ff; color: #7e22ce; padding: 2px 6px; border-radius: 4px; display: none; }
 .rem-tag { font-size: 11px; background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; display: none; }
 
 /* 按鈕群 */
-.btn-timer { background: #eff6ff; color: var(--primary); font-size: 12px; padding: 4px 8px; margin-left: 5px; }
+.btn-timer { 
+  background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe;
+  font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer; 
+}
 .btn-power { width: 100%; background: #111; color: #fff; margin-top: 10px; }
 
-/* 開關 */
-.switch { position: relative; display: inline-block; width: 46px; height: 26px; }
+.switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 34px; }
 .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
@@ -126,7 +108,8 @@ input:checked + .slider:before { transform: translateX(20px); }
 
     <div class="card" style="grid-column: span 1; min-width: 300px;">
       <h2>⚙️ 設備控制</h2>
-      <div id="dev-list"></div> </div>
+      <div id="dev-list"></div>
+    </div>
 
     <div class="card">
       <h2>💡 燈光參數</h2>
@@ -139,8 +122,8 @@ input:checked + .slider:before { transform: translateX(20px); }
         <input type="range" id="spec" min="1" max="21" value="1" style="width:100%">
       </div>
       <div style="display:flex; gap:10px; margin-top:20px">
-        <button onclick="pub('cal_dark',1)" style="flex:1;background:#fff;border:1px solid #ccc;color:#555">校正暗場</button>
-        <button onclick="pub('cal_bright',1)" style="flex:1;background:#fff;border:1px solid #ccc;color:#555">校正亮場</button>
+        <button onclick="pub('cal_dark',1)" style="flex:1;background:#fff;border:1px solid #ccc;color:#555;padding:8px">校正暗場</button>
+        <button onclick="pub('cal_bright',1)" style="flex:1;background:#fff;border:1px solid #ccc;color:#555;padding:8px">校正亮場</button>
       </div>
     </div>
 
@@ -155,9 +138,8 @@ input:checked + .slider:before { transform: translateX(20px); }
 let client = null;
 const $ = (id) => document.getElementById(id);
 
-// 定義設備列表 (對應 ESP32 的 name)
 const devices = [
-  { id: "light",   name: "植物燈", icon: "💡" }, // 特殊處理
+  { id: "light",   name: "植物燈", icon: "💡" },
   { id: "mist",    name: "加濕器", icon: "🌫" },
   { id: "fan_in",  name: "進風扇", icon: "🍃" },
   { id: "fan_out", name: "排風扇", icon: "🌪" },
@@ -165,7 +147,6 @@ const devices = [
   { id: "aux",     name: "輔助",   icon: "🔧" }
 ];
 
-// 初始化設備列表 UI
 const devContainer = $("dev-list");
 devices.forEach(d => {
   const html = `
@@ -173,13 +154,13 @@ devices.forEach(d => {
       <div class="dev-left">
         <div class="dev-icon">${d.icon}</div>
         <div class="dev-info">
-          <div class="dev-name">
-            ${d.name} 
-            <button class="btn-timer" onclick="setTimer('${d.id}')">⏱️</button>
+          <div class="dev-header">
+            <div class="dev-name">${d.name}</div>
+            <button class="btn-timer" onclick="setTimer('${d.id}')">⏱ 設定定時</button>
           </div>
           <div class="tag-group">
-            <span id="run_${d.id}" class="run-tag">00:00:00</span>
-            <span id="rem_${d.id}" class="rem-tag">剩餘 5分</span>
+            <span id="run_${d.id}" class="run-tag">--</span>
+            <span id="rem_${d.id}" class="rem-tag">--</span>
           </div>
         </div>
       </div>
@@ -200,26 +181,18 @@ function pub(op, val, target=null){
 }
 
 function toggleDev(id, checked) {
-  // 燈光開關用 power 指令，其他用 set 指令
-  if (id === "light") {
-    pub("power", 1); 
-    // 燈光是 Toggle，但我們無法確知硬體狀態，這裡假設切換成功
-    // 實際狀態會等 MQTT 回傳來更新 UI
-  } else {
-    pub("set", checked ? 1 : 0, id);
-  }
+  if (id === "light") { pub("power", 1); } 
+  else { pub("set", checked ? 1 : 0, id); }
 }
 
 function setTimer(id) {
-  let min = prompt(`請輸入 [${id}] 的倒數時間 (分鐘)：`, "10");
-  if (min && min > 0) {
-    pub("timer", parseInt(min), id);
-  } else if (min == "0") {
-    pub("timer", 0, id); // 取消定時
+  let min = prompt(`請輸入 [${id}] 幾分鐘後自動關閉？\n(輸入 0 為取消)`, "10");
+  if (min !== null) {
+    let val = parseInt(min);
+    if (!isNaN(val)) pub("timer", val, id);
   }
 }
 
-// 格式化秒數為 HH:MM:SS
 function fmtTime(s) {
   if(s <= 0) return "00:00:00";
   const h = Math.floor(s / 3600).toString().padStart(2,'0');
@@ -251,7 +224,6 @@ $("btnConn").onclick = () => {
       const d = JSON.parse(msg.toString());
       $("debug").innerText = JSON.stringify(d, null, 2);
 
-      // 環境
       if(d.t) $("t").innerText = d.t; if(d.h) $("h").innerText = d.h;
       if(d.co2) $("co2").innerText = d.co2; if(d.lux_rel) $("lux").innerText = d.lux_rel;
       if(d.s_h) $("s_h").innerText = d.s_h; if(d.s_t) $("s_t").innerText = d.s_t;
@@ -259,14 +231,13 @@ $("btnConn").onclick = () => {
       if(d.bri_pct) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
       if(d.spec) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
 
-      // 設備狀態 (devs 物件)
       if (d.devs) {
         for (const [key, info] of Object.entries(d.devs)) {
-          // 1. 更新開關
+          // 開關
           const sw = $("sw_" + key);
           if (sw) sw.checked = (info.s === 1);
 
-          // 2. 更新運行時間 (紫色標籤)
+          // 運行時間 (紫色)
           const runTag = $("run_" + key);
           if (runTag) {
             if (info.s === 1) {
@@ -277,7 +248,7 @@ $("btnConn").onclick = () => {
             }
           }
 
-          // 3. 更新倒數計時 (紅色標籤)
+          // 倒數計時 (紅色)
           const remTag = $("rem_" + key);
           if (remTag) {
             if (info.rem > 0) {
@@ -289,8 +260,7 @@ $("btnConn").onclick = () => {
           }
         }
       }
-
-    } catch(e) { console.error(e); }
+    } catch(e) {}
   });
 };
 </script>
