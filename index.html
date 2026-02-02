@@ -3,238 +3,100 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro</title>
+<title>PlantLight Pro v7.3</title>
 
 <style>
 :root {
-  --bg: #f2f4f6;          /* 背景色 */
-  --card: #ffffff;        /* 卡片白 */
-  --text: #1f2937;        /* 深灰字 */
-  --primary: #2563eb;     /* 科技藍 */
-  --primary-light: #eff6ff;
-  --success: #10b981;     /* 成功綠 */
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --bg: #77fff6; --card: #ffffff; --text: #1f2937;
+  --primary: #2563eb; --primary-light: #eff6ff;
+  --success: #10b981; --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   --radius: 16px;
 }
-
 body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  -webkit-tap-highlight-color: transparent;
-  padding-bottom: 40px;
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-tap-highlight-color: transparent; padding-bottom: 50px;
 }
+.container { max-width: 500px; margin: 0 auto; padding: 16px; }
 
-.container {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 16px;
-}
-
-/* --- 頂部導航 --- */
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 4px 20px 4px;
-}
-h1 { margin: 0; font-size: 22px; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
-.logo { margin-right: 6px; font-size: 24px; }
-
-.status-badge {
-  padding: 6px 12px;
-  border-radius: 99px;
-  font-size: 13px;
-  font-weight: 600;
-  background: #e5e7eb;
-  color: #6b7280;
-  transition: all 0.3s ease;
-}
+/* Header */
+header { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px 20px; }
+h1 { margin: 0; font-size: 22px; color: #111; display: flex; align-items: center; gap: 8px; }
+.status-badge { padding: 6px 12px; border-radius: 99px; font-size: 13px; background: #e5e7eb; color: #666; font-weight: 600; }
 .status-badge.ok { background: #dcfce7; color: #166534; }
 
-/* --- 卡片通用 --- */
-.card {
-  background: var(--card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(255,255,255,0.5);
-}
+/* Card */
+.card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px; }
+h2 { margin: 0 0 16px; font-size: 15px; color: #6b7280; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
 
-h2 {
-  margin: 0 0 16px 0;
-  font-size: 15px;
-  color: #6b7280;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* --- 1. 連線設定 (修復重點) --- */
-.conn-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.input-group {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.input-icon {
-  position: absolute;
-  left: 12px;
-  font-size: 16px;
-  opacity: 0.5;
-  pointer-events: none;
-}
+/* 1. 連線設定 (手機優化) */
+.conn-form { display: flex; flex-direction: column; gap: 12px; }
+.input-group { position: relative; display: flex; align-items: center; }
+.input-icon { position: absolute; left: 12px; opacity: 0.5; }
 input[type=text], input[type=password] {
-  width: 100%;
-  padding: 12px 12px 12px 40px; /* 留位置給 Icon */
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #f9fafb;
-  font-size: 16px;
-  color: #111;
-  outline: none;
-  transition: 0.2s;
-  box-sizing: border-box;
+  width: 100%; padding: 12px 12px 12px 40px; border: 1px solid #e5e7eb;
+  border-radius: 12px; background: #f9fafb; font-size: 16px; outline: none; box-sizing: border-box;
 }
-input:focus {
-  border-color: var(--primary);
-  background: #fff;
-  box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-/* 第二行：Key + 按鈕 */
-.conn-row-bottom {
-  display: flex;
-  gap: 10px;
-}
-#key { flex: 1; } /* Key 自動填滿剩餘空間 */
+.conn-row-bottom { display: flex; gap: 10px; }
 #btnConn {
-  flex: 0 0 auto;
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 0 24px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+  background: var(--primary); color: white; border: none; padding: 0 24px;
+  border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
 }
-#btnConn:active { transform: scale(0.96); opacity: 0.9; }
 
-/* --- 2. 環境數據 (大字體) --- */
-.sensor-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
+/* 2. 環境數據 & 校正 */
+.sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .s-box {
-  background: #f9fafb;
-  padding: 16px;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  border: 1px solid #f3f4f6;
+  background: #f9fafb; padding: 16px; border-radius: 16px; position: relative; border: 1px solid #f3f4f6;
 }
-.s-icon { 
-  position: absolute; top: 12px; right: 12px; 
-  font-size: 20px; opacity: 0.6; 
-}
-.s-val { 
-  font-size: 28px; 
-  font-weight: 800; 
-  color: #1f2937; 
-  line-height: 1.2; 
-  margin-top: 4px;
-}
-.s-val small { font-size: 14px; font-weight: normal; color: #9ca3af; }
-.s-label { font-size: 13px; color: #6b7280; font-weight: 500; }
+.s-icon { position: absolute; top: 12px; right: 12px; font-size: 20px; opacity: 0.5; }
+.s-val { font-size: 28px; font-weight: 800; color: #1f2937; margin-top: 4px; }
+.s-val small { font-size: 14px; font-weight: normal; color: #999; }
+.s-label { font-size: 13px; color: #666; }
 
-/* --- 3. 燈光控制 --- */
+/* 校正工具 */
+.cal-tools { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #eee; }
+.cal-btn-group { display: flex; gap: 10px; }
+.btn-cal {
+  flex: 1; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 10px;
+  color: #555; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.btn-cal:active { background: #f3f4f6; transform: scale(0.98); }
+
+/* 3. 燈光控制 */
 .control-row { margin-bottom: 24px; }
-.control-header {
-  display: flex; justify-content: space-between; margin-bottom: 10px;
-  font-size: 15px; font-weight: 600; color: #374151;
-}
+.control-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; color: #374151; }
 .val-tag { color: var(--primary); font-weight: 800; }
-
-input[type=range] {
-  -webkit-appearance: none; width: 100%; height: 8px;
-  background: #e5e7eb; border-radius: 8px; outline: none;
-}
+input[type=range] { -webkit-appearance: none; width: 100%; height: 8px; background: #e5e7eb; border-radius: 8px; outline: none; }
 input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 28px; height: 28px;
-  background: #fff;
-  border: 6px solid var(--primary);
-  border-radius: 50%; cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  -webkit-appearance: none; width: 28px; height: 28px; background: #fff; border: 6px solid var(--primary); border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
-
 .btn-power {
-  width: 100%; padding: 16px;
-  background: #1f2937; color: #fff;
-  border: none; border-radius: 14px;
-  font-size: 16px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  width: 100%; padding: 16px; background: #1f2937; color: #fff; border: none; border-radius: 14px;
+  font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
 }
-.btn-power:active { transform: scale(0.98); }
 
-/* --- 4. 設備清單 --- */
-.device-item {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 0; border-bottom: 1px solid #f3f4f6;
-}
-.device-item:last-child { border-bottom: none; padding-bottom: 0; }
+/* 4. 設備開關 */
+.device-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
+.device-item:last-child { border-bottom: none; }
 .d-info { display: flex; align-items: center; gap: 12px; }
-.d-icon { 
-  width: 36px; height: 36px; background: #f3f4f6; 
-  border-radius: 10px; display: grid; place-items: center; font-size: 18px; 
-}
-.d-name { font-weight: 600; font-size: 16px; color: #374151; }
+.d-icon { width: 36px; height: 36px; background: #f3f4f6; border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
+.d-name { font-weight: 600; color: #374151; }
 
-/* 開關樣式 */
 .switch { position: relative; display: inline-block; width: 50px; height: 30px; }
 .switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-  position: absolute; cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #d1d5db; transition: .3s; border-radius: 30px;
-}
-.slider:before {
-  position: absolute; content: "";
-  height: 24px; width: 24px; left: 3px; bottom: 3px;
-  background-color: white; transition: .3s; border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #d1d5db; transition: .3s; border-radius: 30px; }
+.slider:before { position: absolute; content: ""; height: 24px; width: 24px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 input:checked + .slider { background-color: var(--success); }
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* Debug */
-#debug {
-  background: #111; color: #0f0; padding: 12px;
-  border-radius: 8px; font-size: 11px; font-family: monospace;
-  display: none; white-space: pre-wrap; margin-top: 20px;
-}
+#debug { background: #111; color: #0f0; padding: 12px; border-radius: 8px; font-size: 11px; display: none; white-space: pre-wrap; margin-top: 20px; }
 </style>
 </head>
 <body>
 
 <div class="container">
   <header>
-    <h1><span class="logo">🌱</span> PlantLight Pro</h1>
+    <h1>🌱 PlantLight Pro</h1>
     <div id="status" class="status-badge">未連線</div>
   </header>
 
@@ -257,90 +119,48 @@ input:checked + .slider:before { transform: translateX(20px); }
   <div class="card">
     <h2>📊 環境數據</h2>
     <div class="sensor-grid">
-      <div class="s-box">
-        <span class="s-icon">🌡</span>
-        <span class="s-label">溫度</span>
-        <div class="s-val"><span id="t">--</span><small>°C</small></div>
-      </div>
-      <div class="s-box">
-        <span class="s-icon">💧</span>
-        <span class="s-label">濕度</span>
-        <div class="s-val"><span id="h">--</span><small>%</small></div>
-      </div>
-      <div class="s-box">
-        <span class="s-icon">☁️</span>
-        <span class="s-label">CO₂ 濃度</span>
-        <div class="s-val"><span id="co2">--</span><small>ppm</small></div>
-      </div>
-      <div class="s-box">
-        <span class="s-icon">☀️</span>
-        <span class="s-label">光照度</span>
-        <div class="s-val"><span id="lux">--</span><small>%</small></div>
+      <div class="s-box"><span class="s-icon">🌡</span><span class="s-label">溫度</span><div class="s-val"><span id="t">--</span><small>°C</small></div></div>
+      <div class="s-box"><span class="s-icon">💧</span><span class="s-label">濕度</span><div class="s-val"><span id="h">--</span><small>%</small></div></div>
+      <div class="s-box"><span class="s-icon">☁️</span><span class="s-label">CO₂</span><div class="s-val"><span id="co2">--</span><small>ppm</small></div></div>
+      <div class="s-box"><span class="s-icon">☀️</span><span class="s-label">光照</span><div class="s-val"><span id="lux">--</span><small>%</small></div></div>
+    </div>
+    
+    <div class="cal-tools">
+      <div class="cal-btn-group">
+        <button class="btn-cal" id="btnSetDark">🌑 設為暗場 (0%)</button>
+        <button class="btn-cal" id="btnSetBright">☀️ 設為亮場 (100%)</button>
       </div>
     </div>
   </div>
 
   <div class="card">
     <h2>💡 植物燈控制 (UART)</h2>
-    
     <div class="control-row">
-      <div class="control-header">
-        <span>亮度 (Brightness)</span>
-        <span class="val-tag" id="briVal">50%</span>
-      </div>
+      <div class="control-header"><span>亮度 (Brightness)</span><span class="val-tag" id="briVal">50%</span></div>
       <input type="range" id="bri" min="0" max="100" value="50">
     </div>
-
     <div class="control-row">
-      <div class="control-header">
-        <span>光譜 (Spectrum)</span>
-        <span class="val-tag" id="specVal">1</span>
-      </div>
+      <div class="control-header"><span>光譜 (Spectrum)</span><span class="val-tag" id="specVal">1</span></div>
       <input type="range" id="spec" min="1" max="21" value="1">
     </div>
-
-    <button class="btn-power" id="btnPower">
-      <span style="font-size:18px">⏻</span> 電源總開關
-    </button>
+    <button class="btn-power" id="btnPower"><span>⏻</span> 電源總開關 (Toggle)</button>
   </div>
 
   <div class="card">
-    <h2>⚙️ 設備開關 (GPIO)</h2>
+    <h2>⚙️ 設備控制</h2>
     <div class="device-list">
-      
-      <div class="device-item">
-        <div class="d-info"><div class="d-icon">🌫</div><div class="d-name">加濕器</div></div>
-        <label class="switch"><input type="checkbox" id="sw_mist"><span class="slider"></span></label>
-      </div>
-
-      <div class="device-item">
-        <div class="d-info"><div class="d-icon">🍃</div><div class="d-name">進風扇</div></div>
-        <label class="switch"><input type="checkbox" id="sw_fan_in"><span class="slider"></span></label>
-      </div>
-
-      <div class="device-item">
-        <div class="d-info"><div class="d-icon">🌪</div><div class="d-name">排風扇</div></div>
-        <label class="switch"><input type="checkbox" id="sw_fan_out"><span class="slider"></span></label>
-      </div>
-
-      <div class="device-item">
-        <div class="d-info"><div class="d-icon">🚰</div><div class="d-name">水泵</div></div>
-        <label class="switch"><input type="checkbox" id="sw_pump"><span class="slider"></span></label>
-      </div>
-
-      <div class="device-item">
-        <div class="d-info"><div class="d-icon">🔧</div><div class="d-name">輔助</div></div>
-        <label class="switch"><input type="checkbox" id="sw_aux"><span class="slider"></span></label>
-      </div>
-
+      <div class="device-item"><div class="d-info"><div class="d-icon">🌫</div><div class="d-name">加濕器</div></div><label class="switch"><input type="checkbox" id="sw_mist"><span class="slider"></span></label></div>
+      <div class="device-item"><div class="d-info"><div class="d-icon">🍃</div><div class="d-name">進風扇</div></div><label class="switch"><input type="checkbox" id="sw_fan_in"><span class="slider"></span></label></div>
+      <div class="device-item"><div class="d-info"><div class="d-icon">🌪</div><div class="d-name">排風扇</div></div><label class="switch"><input type="checkbox" id="sw_fan_out"><span class="slider"></span></label></div>
+      <div class="device-item"><div class="d-info"><div class="d-icon">🚰</div><div class="d-name">水泵</div></div><label class="switch"><input type="checkbox" id="sw_pump"><span class="slider"></span></label></div>
+      <div class="device-item"><div class="d-info"><div class="d-icon">🔧</div><div class="d-name">輔助</div></div><label class="switch"><input type="checkbox" id="sw_aux"><span class="slider"></span></label></div>
     </div>
   </div>
 
   <div style="text-align:center;">
-    <a href="#" onclick="$('debug').style.display='block';return false;" style="color:#aaa;text-decoration:none;font-size:12px;">顯示除錯訊息</a>
+    <a href="#" onclick="$('debug').style.display='block';return false;" style="color:#aaa;font-size:12px;text-decoration:none">顯示除錯</a>
     <pre id="debug"></pre>
   </div>
-
 </div>
 
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -348,7 +168,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 let client = null;
 const $ = (id) => document.getElementById(id);
 
-// 發送 MQTT
 function pub(op, val){
   if(!client || !client.connected) { alert("請先連線！"); return; }
   const topic = $("base").value.trim() + "/cmd";
@@ -356,34 +175,23 @@ function pub(op, val){
   client.publish(topic, payload);
 }
 
-// UI 事件綁定
 $("bri").onchange = (e) => pub("bright_pct", parseInt(e.target.value));
 $("bri").oninput = (e) => $("briVal").innerText = e.target.value + "%";
-
 $("spec").onchange = (e) => pub("spec", parseInt(e.target.value));
 $("spec").oninput = (e) => $("specVal").innerText = e.target.value;
-
 $("btnPower").onclick = () => pub("power", 1);
+$("btnSetDark").onclick = () => pub("cal_dark", 1);
+$("btnSetBright").onclick = () => pub("cal_bright", 1);
 
 const devs = ["mist", "fan_in", "fan_out", "pump", "aux"];
-devs.forEach(d => {
-  $("sw_"+d).onchange = (e) => pub(d, e.target.checked ? 1 : 0);
-});
+devs.forEach(d => { $("sw_"+d).onchange = (e) => pub(d, e.target.checked ? 1 : 0); });
 
-// 連線邏輯
 $("btnConn").onclick = () => {
-  const btn = $("btnConn");
-  const badge = $("status");
+  const btn = $("btnConn"); const badge = $("status");
+  if(client){ client.end(); client = null; btn.innerText = "連線"; badge.innerText = "未連線"; badge.className = "status-badge"; return; }
 
-  if(client){ 
-    client.end(); client = null; 
-    btn.innerText = "連線"; badge.innerText = "未連線"; badge.className = "status-badge";
-    return;
-  }
-
-  btn.innerText = "連線中...";
-  const url = "wss://broker.emqx.io:8084/mqtt";
-  client = mqtt.connect(url, { clientId: "web_" + Math.random().toString(16).substr(2, 8) });
+  btn.innerText = "...";
+  client = mqtt.connect("wss://broker.emqx.io:8084/mqtt", { clientId: "web_" + Math.random().toString(16).substr(2, 8) });
 
   client.on("connect", () => {
     btn.innerText = "斷線"; badge.innerText = "已連線"; badge.className = "status-badge ok";
@@ -391,24 +199,17 @@ $("btnConn").onclick = () => {
   });
 
   client.on("message", (topic, msg) => {
-    const str = msg.toString();
-    $("debug").innerText = str;
     try {
-      const d = JSON.parse(str);
-      
+      const d = JSON.parse(msg.toString());
+      $("debug").innerText = JSON.stringify(d, null, 2);
       if(d.t !== undefined) $("t").innerText = d.t;
       if(d.h !== undefined) $("h").innerText = d.h;
       if(d.co2 !== undefined) $("co2").innerText = d.co2;
       if(d.lux_rel !== undefined) $("lux").innerText = d.lux_rel;
-
       if(d.bri_pct !== undefined) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
       if(d.spec !== undefined) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
-
-      devs.forEach(dev => {
-        if(d[dev] !== undefined) $("sw_"+dev).checked = (d[dev] > 0);
-      });
-
-    } catch(e) { console.error(e); }
+      devs.forEach(dev => { if(d[dev] !== undefined) $("sw_"+dev).checked = (d[dev] > 0); });
+    } catch(e) {}
   });
 };
 </script>
