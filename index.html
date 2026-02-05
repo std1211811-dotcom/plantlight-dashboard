@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.7</title>
+<title>PlantLight Pro v10.11</title>
 
 <style>
 :root {
@@ -154,6 +154,8 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
       <div class="cfg-row"><span style="flex:1">土壤濕度 低於 (%)</span><input type="number" id="cfg_soil" placeholder="40"></div>
       <div class="cfg-row"><span style="flex:1">單次執行時間 (秒)</span><input type="number" id="cfg_time" placeholder="300"></div>
       <button onclick="setCfg()" style="width:100%;margin-top:8px;padding:8px;background:var(--purple);color:#fff;border-radius:8px;border:none;cursor:pointer">儲存設定</button>
+      
+      <button onclick="pub('upload',1)" style="width:100%;margin-top:16px;padding:12px;background:#8b5cf6;color:#fff;border-radius:8px;border:none;cursor:pointer;font-weight:bold;box-shadow:0 4px 6px rgba(139, 92, 246, 0.25)">☁️ 手動上傳至 Google Sheets</button>
     </div>
 
     <div class="card">
@@ -248,7 +250,6 @@ function pub(op, val, target=null, extra={}){
 
 function setSysMode(m) {
   pub("sys_mode", m);
-  // UI 立即反應
   updateModeUI(m);
 }
 
@@ -257,10 +258,9 @@ function updateModeUI(m) {
   $("modeAuto").className = isAuto ? "mode-btn active" : "mode-btn";
   $("modeManual").className = !isAuto ? "mode-btn active manual" : "mode-btn";
   
-  // 手動模式下，把自動防護卡片變灰
   if(!isAuto) {
     $("cardCfg").classList.add("disabled");
-    // $("cardSched").classList.add("disabled"); // 排程如果也想禁用可取消註解
+    // $("cardSched").classList.add("disabled"); 
   } else {
     $("cardCfg").classList.remove("disabled");
     // $("cardSched").classList.remove("disabled");
@@ -307,7 +307,6 @@ $("btnConn").onclick = () => {
       if(d.uptime) $("uptime").innerText = d.uptime.split(" ")[0]; 
       if(d.time) $("time").innerText = d.time;
       
-      // ★ 同步 ESP32 的模式
       if(d.sys_mode !== undefined) updateModeUI(d.sys_mode);
       
       if(d.t) $("t").innerText = d.t; if(d.h) $("h").innerText = d.h;
