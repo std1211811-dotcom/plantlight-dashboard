@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.4</title>
+<title>PlantLight Pro v10.6</title>
 
 <style>
 :root {
@@ -76,6 +76,10 @@ input:checked + .slider:before { transform: translateX(18px); }
 .sched-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 
+/* Config Box */
+.cfg-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 14px; color: #555; }
+.cfg-row input { padding: 6px; width: 70px; text-align: center; }
+
 /* Camera */
 .cam-container { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 12px; overflow: hidden; margin-top: 10px; }
 .cam-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -133,6 +137,23 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
         <div class="s-box"><div class="s-val"><span id="s_ph">--</span><small>pH</small></div><div class="s-label">酸鹼</div><span class="s-icon">🧪</span></div>
         <div class="s-box"><div class="s-val"><span id="s_ec">--</span><small>us</small></div><div class="s-label">電導</div><span class="s-icon">⚡</span></div>
       </div>
+    </div>
+    
+    <div class="card">
+      <h2>🛡️ 自動防護設定</h2>
+      <div class="cfg-row">
+        <span style="flex:1">CO2 低於 (ppm)</span>
+        <input type="number" id="cfg_co2" placeholder="500">
+      </div>
+      <div class="cfg-row">
+        <span style="flex:1">土壤濕度 低於 (%)</span>
+        <input type="number" id="cfg_soil" placeholder="40">
+      </div>
+      <div class="cfg-row">
+        <span style="flex:1">單次執行時間 (秒)</span>
+        <input type="number" id="cfg_time" placeholder="300">
+      </div>
+      <button onclick="setCfg()" style="width:100%;margin-top:8px;padding:8px;background:var(--purple);color:#fff">儲存設定</button>
     </div>
 
     <div class="card">
@@ -232,6 +253,14 @@ function pub(op, val, target=null, extra={}){
   client.publish($("base").value.trim() + "/cmd", JSON.stringify(payload));
 }
 
+function setCfg() {
+  const c = parseInt($("cfg_co2").value);
+  const s = parseInt($("cfg_soil").value);
+  const t = parseInt($("cfg_time").value);
+  if(isNaN(c) || isNaN(s) || isNaN(t)) { alert("請輸入完整數值"); return; }
+  pub("set_cfg", 0, null, { co2_th: c, soil_th: s, run_t: t });
+}
+
 function toggleDev(id, checked) { if (id === "light") pub("power", 1); else pub("set", checked ? 1 : 0, id); }
 function setTimer(id) { let min = prompt(`[${id}] 倒數定時 (分鐘)：`, "10"); if (min != null) pub("timer", parseInt(min), id); }
 function setCycle(id) { if(confirm(`啟動 [${id}] 循環 (開5分/停30分)？`)) pub("cycle", 1, id); else pub("cycle", 0, id); }
@@ -273,9 +302,13 @@ $("btnConn").onclick = () => {
       if(d.spec) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
       if(d.sch_en !== undefined) $("sch_en").checked = (d.sch_en == 1);
       
-      // ★ 修正：防止輸入一半被蓋掉
       if(d.sch_on && document.activeElement.id !== "sch_on") $("sch_on").value = d.sch_on;
       if(d.sch_off && document.activeElement.id !== "sch_off") $("sch_off").value = d.sch_off;
+
+      // ★ 新增：更新網頁上的設定值
+      if(d.cfg_co2 !== undefined && document.activeElement.id !== "cfg_co2") $("cfg_co2").value = d.cfg_co2;
+      if(d.cfg_soil !== undefined && document.activeElement.id !== "cfg_soil") $("cfg_soil").value = d.cfg_soil;
+      if(d.cfg_time !== undefined && document.activeElement.id !== "cfg_time") $("cfg_time").value = d.cfg_time;
 
       if (d.devs) {
         for (const [key, info] of Object.entries(d.devs)) {
