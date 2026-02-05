@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.11</title>
+<title>PlantLight Pro v10.12</title>
 
 <style>
 :root {
@@ -21,7 +21,7 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple
 
 /* Cards */
 .card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); padding: 16px; transition: 0.3s; }
-.card.disabled { opacity: 0.6; pointer-events: none; filter: grayscale(1); } /* 禁用狀態 */
+.card.disabled { opacity: 0.6; pointer-events: none; filter: grayscale(1); } 
 
 h2 { margin: 0 0 12px; font-size: 14px; color: #6b7280; font-weight: 700; letter-spacing: 0.5px; }
 
@@ -29,15 +29,17 @@ h2 { margin: 0 0 12px; font-size: 14px; color: #6b7280; font-weight: 700; letter
 header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
 h1 { margin: 0; font-size: 22px; color: #111; font-weight: 800; display: flex; align-items: center; gap: 6px; }
 .status-group { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.badge-row { display: flex; gap: 6px; }
 .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; background: #e5e7eb; color: #6b7280; font-weight: 600; font-family: monospace; }
 .badge.ok { background: #dcfce7; color: #15803d; } 
 .badge.time { background: #e0f2fe; color: #0369a1; }
+.badge.run { background: #fef3c7; color: #d97706; }
 
-/* ★ 模式切換按鈕 */
+/* Mode Switch */
 .mode-switch { display: flex; background: #e5e7eb; border-radius: 12px; padding: 4px; margin-bottom: 16px; }
 .mode-btn { flex: 1; border: none; background: transparent; padding: 10px; border-radius: 8px; font-weight: 700; color: #6b7280; cursor: pointer; transition: 0.3s; font-size: 14px; }
 .mode-btn.active { background: #fff; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.mode-btn.active.manual { color: var(--danger); } /* 手動模式用紅色 */
+.mode-btn.active.manual { color: var(--danger); } 
 
 /* Connection */
 .conn-box { background: #fff; padding: 12px; border-radius: var(--r); box-shadow: var(--shadow); margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
@@ -100,7 +102,10 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
     <h1>🌱 PlantLight</h1>
     <div class="status-group">
       <div id="status" class="badge">未連線</div>
-      <div id="time" class="badge time">--:--</div>
+      <div class="badge-row">
+        <div id="uptime" class="badge run">--d --h</div>
+        <div id="time" class="badge time">--:--</div>
+      </div>
     </div>
   </header>
 
@@ -154,7 +159,6 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
       <div class="cfg-row"><span style="flex:1">土壤濕度 低於 (%)</span><input type="number" id="cfg_soil" placeholder="40"></div>
       <div class="cfg-row"><span style="flex:1">單次執行時間 (秒)</span><input type="number" id="cfg_time" placeholder="300"></div>
       <button onclick="setCfg()" style="width:100%;margin-top:8px;padding:8px;background:var(--purple);color:#fff;border-radius:8px;border:none;cursor:pointer">儲存設定</button>
-      
       <button onclick="pub('upload',1)" style="width:100%;margin-top:16px;padding:12px;background:#8b5cf6;color:#fff;border-radius:8px;border:none;cursor:pointer;font-weight:bold;box-shadow:0 4px 6px rgba(139, 92, 246, 0.25)">☁️ 手動上傳至 Google Sheets</button>
     </div>
 
@@ -173,7 +177,6 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
         <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;font-weight:700"><span>光譜</span><span id="specVal" style="color:var(--primary)">1</span></div>
         <input type="range" id="spec" min="1" max="21" value="1" style="width:100%">
       </div>
-      
       <div class="sched-box">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-weight:700;font-size:13px;color:#555">📅 每日定時</span>
@@ -186,7 +189,6 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
           <button onclick="setSched()" style="background:var(--primary);color:#fff;font-size:12px;padding:6px 12px">設定</button>
         </div>
       </div>
-
       <div style="display:flex; gap:8px; margin-top:16px">
         <button onclick="pub('cal_dark',1)" style="flex:1;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:12px">校正 (0 Lux)</button>
         <button onclick="pub('cal_bright',1)" style="flex:1;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:12px">校正 (2000 Lux)</button>
@@ -248,23 +250,13 @@ function pub(op, val, target=null, extra={}){
   client.publish($("base").value.trim() + "/cmd", JSON.stringify(payload));
 }
 
-function setSysMode(m) {
-  pub("sys_mode", m);
-  updateModeUI(m);
-}
+function setSysMode(m) { pub("sys_mode", m); updateModeUI(m); }
 
 function updateModeUI(m) {
   const isAuto = (m == 1);
   $("modeAuto").className = isAuto ? "mode-btn active" : "mode-btn";
   $("modeManual").className = !isAuto ? "mode-btn active manual" : "mode-btn";
-  
-  if(!isAuto) {
-    $("cardCfg").classList.add("disabled");
-    // $("cardSched").classList.add("disabled"); 
-  } else {
-    $("cardCfg").classList.remove("disabled");
-    // $("cardSched").classList.remove("disabled");
-  }
+  if(!isAuto) { $("cardCfg").classList.add("disabled"); } else { $("cardCfg").classList.remove("disabled"); }
 }
 
 function setCfg() {
@@ -304,15 +296,18 @@ $("btnConn").onclick = () => {
     try {
       const d = JSON.parse(msg.toString());
       $("debug").innerText = JSON.stringify(d, null, 2);
-      if(d.uptime) $("uptime").innerText = d.uptime.split(" ")[0]; 
-      if(d.time) $("time").innerText = d.time;
       
+      // ★ 修正：安全更新數值，防止崩潰
+      const update = (id, val) => { if (val !== undefined && $(id)) $(id).innerText = val; };
+
+      if(d.uptime && $("uptime")) $("uptime").innerText = d.uptime.split(" ")[0]; 
+      if(d.time) $("time").innerText = d.time;
       if(d.sys_mode !== undefined) updateModeUI(d.sys_mode);
       
-      if(d.t) $("t").innerText = d.t; if(d.h) $("h").innerText = d.h;
-      if(d.co2) $("co2").innerText = d.co2; if(d.lux_rel) $("lux").innerText = d.lux_rel;
-      if(d.s_h) $("s_h").innerText = d.s_h; if(d.s_t) $("s_t").innerText = d.s_t;
-      if(d.s_ph) $("s_ph").innerText = d.s_ph; if(d.s_ec) $("s_ec").innerText = d.s_ec;
+      update("t", d.t); update("h", d.h);
+      update("co2", d.co2); update("lux", d.lux_rel);
+      update("s_h", d.s_h); update("s_t", d.s_t);
+      update("s_ph", d.s_ph); update("s_ec", d.s_ec);
       
       if(d.bri_pct) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
       if(d.spec) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
