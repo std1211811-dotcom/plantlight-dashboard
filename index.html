@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.1</title>
+<title>PlantLight Pro v10.4</title>
 
 <style>
 :root {
@@ -14,12 +14,12 @@
 body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, sans-serif; -webkit-tap-highlight-color: transparent; padding-bottom: 40px; }
 .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
 
-/* Grid Layout: 手機單欄，電腦多欄 */
+/* Grid Layout */
 .grid-layout { display: grid; gap: 16px; grid-template-columns: 1fr; }
 @media (min-width: 768px) { .grid-layout { grid-template-columns: 1fr 1fr; } }
 @media (min-width: 1024px) { .grid-layout { grid-template-columns: 1fr 1fr 1fr; } }
 
-/* Card Style */
+/* Cards */
 .card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); padding: 16px; }
 h2 { margin: 0 0 12px; font-size: 14px; color: #6b7280; font-weight: 700; letter-spacing: 0.5px; }
 
@@ -32,16 +32,15 @@ h1 { margin: 0; font-size: 22px; color: #111; font-weight: 800; display: flex; a
 .badge.time { background: #e0f2fe; color: #0369a1; }
 .badge.uptime { background: #f3e8ff; color: #7e22ce; }
 
-/* Connection Box (手機版分行優化) */
+/* Connection */
 .conn-box { background: #fff; padding: 12px; border-radius: var(--r); box-shadow: var(--shadow); margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
 .input-row { display: flex; gap: 10px; }
 input { padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; outline: none; background: #f9fafb; font-size: 15px; width: 100%; box-sizing: border-box; }
 input:focus { border-color: var(--primary); background: #fff; }
 button { border: none; cursor: pointer; font-weight: 600; border-radius: 8px; transition: 0.2s; }
 .btn-main { background: var(--primary); color: #fff; padding: 0 20px; font-size: 15px; }
-.btn-main:active { opacity: 0.8; transform: scale(0.98); }
 
-/* Sensor Grid */
+/* Sensors */
 .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .s-box { background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9; position: relative; }
 .s-val { font-size: 22px; font-weight: 800; color: #333; line-height: 1.2; }
@@ -49,7 +48,7 @@ button { border: none; cursor: pointer; font-weight: 600; border-radius: 8px; tr
 .s-label { font-size: 12px; color: #64748b; margin-top: 4px; }
 .s-icon { position: absolute; top: 10px; right: 10px; font-size: 18px; opacity: 0.3; }
 
-/* Device List */
+/* Devices */
 .dev-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
 .dev-row:last-child { border-bottom: none; padding-bottom: 0; }
 .dev-left { display: flex; align-items: center; gap: 12px; }
@@ -72,7 +71,7 @@ button { border: none; cursor: pointer; font-weight: 600; border-radius: 8px; tr
 input:checked + .slider { background-color: var(--success); }
 input:checked + .slider:before { transform: translateX(18px); }
 
-/* Schedule Box */
+/* Schedule */
 .sched-box { background: #f8fafc; padding: 12px; border-radius: 10px; margin-top: 15px; border: 1px dashed #cbd5e1; }
 .sched-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
@@ -122,7 +121,7 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
         <div class="s-box"><div class="s-val"><span id="t">--</span><small>°C</small></div><div class="s-label">溫度</div><span class="s-icon">🌡</span></div>
         <div class="s-box"><div class="s-val"><span id="h">--</span><small>%</small></div><div class="s-label">濕度</div><span class="s-icon">💧</span></div>
         <div class="s-box"><div class="s-val"><span id="co2">--</span><small>ppm</small></div><div class="s-label">CO2</div><span class="s-icon">☁️</span></div>
-        <div class="s-box"><div class="s-val"><span id="lux">--</span><small>%</small></div><div class="s-label">光照</div><span class="s-icon">☀️</span></div>
+        <div class="s-box"><div class="s-val"><span id="lux">--</span><small>Lux</small></div><div class="s-label">光照</div><span class="s-icon">☀️</span></div>
       </div>
     </div>
 
@@ -166,8 +165,8 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
       </div>
 
       <div style="display:flex; gap:8px; margin-top:16px">
-        <button onclick="pub('cal_dark',1)" style="flex:1;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:12px">校正暗場</button>
-        <button onclick="pub('cal_bright',1)" style="flex:1;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:12px">校正亮場</button>
+        <button onclick="pub('cal_dark',1)" style="flex:1;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:12px">校正 (0 Lux)</button>
+        <button onclick="pub('cal_bright',1)" style="flex:1;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:12px">校正 (2000 Lux)</button>
       </div>
     </div>
 
@@ -184,7 +183,6 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 let client = null;
 const $ = (id) => document.getElementById(id);
 
-// Load Cam IP
 if(localStorage.getItem("camIP")) {
   $("camIP").value = localStorage.getItem("camIP");
   loadCam();
@@ -263,7 +261,7 @@ $("btnConn").onclick = () => {
     try {
       const d = JSON.parse(msg.toString());
       $("debug").innerText = JSON.stringify(d, null, 2);
-      if(d.uptime) $("uptime").innerText = d.uptime.split(" ")[0]; // 簡化顯示
+      if(d.uptime) $("uptime").innerText = d.uptime.split(" ")[0]; 
       if(d.time) $("time").innerText = d.time;
       
       if(d.t) $("t").innerText = d.t; if(d.h) $("h").innerText = d.h;
@@ -274,7 +272,10 @@ $("btnConn").onclick = () => {
       if(d.bri_pct) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
       if(d.spec) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
       if(d.sch_en !== undefined) $("sch_en").checked = (d.sch_en == 1);
-      if(d.sch_on) $("sch_on").value = d.sch_on; if(d.sch_off) $("sch_off").value = d.sch_off;
+      
+      // ★ 修正：防止輸入一半被蓋掉
+      if(d.sch_on && document.activeElement.id !== "sch_on") $("sch_on").value = d.sch_on;
+      if(d.sch_off && document.activeElement.id !== "sch_off") $("sch_off").value = d.sch_off;
 
       if (d.devs) {
         for (const [key, info] of Object.entries(d.devs)) {
