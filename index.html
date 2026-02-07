@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.12</title>
+<title>PlantLight Pro v10.13</title>
 
 <style>
 :root {
@@ -157,6 +157,10 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
       <h2>🛡️ 自動防護 (僅 Auto 模式)</h2>
       <div class="cfg-row"><span style="flex:1">CO2 低於 (ppm)</span><input type="number" id="cfg_co2" placeholder="500"></div>
       <div class="cfg-row"><span style="flex:1">土壤濕度 低於 (%)</span><input type="number" id="cfg_soil" placeholder="40"></div>
+      
+      <div class="cfg-row"><span style="flex:1">空氣濕度 低於 (%) <small>(開霧)</small></span><input type="number" id="cfg_air_low" placeholder="50"></div>
+      <div class="cfg-row"><span style="flex:1">空氣濕度 高於 (%) <small>(開扇)</small></span><input type="number" id="cfg_air_high" placeholder="70"></div>
+      
       <div class="cfg-row"><span style="flex:1">單次執行時間 (秒)</span><input type="number" id="cfg_time" placeholder="300"></div>
       <button onclick="setCfg()" style="width:100%;margin-top:8px;padding:8px;background:var(--purple);color:#fff;border-radius:8px;border:none;cursor:pointer">儲存設定</button>
       <button onclick="pub('upload',1)" style="width:100%;margin-top:16px;padding:12px;background:#8b5cf6;color:#fff;border-radius:8px;border:none;cursor:pointer;font-weight:bold;box-shadow:0 4px 6px rgba(139, 92, 246, 0.25)">☁️ 手動上傳至 Google Sheets</button>
@@ -263,8 +267,15 @@ function setCfg() {
   const c = parseInt($("cfg_co2").value);
   const s = parseInt($("cfg_soil").value);
   const t = parseInt($("cfg_time").value);
-  if(isNaN(c) || isNaN(s) || isNaN(t)) { alert("請輸入完整數值"); return; }
-  pub("set_cfg", 0, null, { co2_th: c, soil_th: s, run_t: t });
+  
+  // ★ 新增：取得空氣濕度輸入
+  const al = parseInt($("cfg_air_low").value);
+  const ah = parseInt($("cfg_air_high").value);
+
+  if(isNaN(c) || isNaN(s) || isNaN(t) || isNaN(al) || isNaN(ah)) { alert("請輸入完整數值"); return; }
+  
+  // ★ 修改：發送空氣濕度設定
+  pub("set_cfg", 0, null, { co2_th: c, soil_th: s, run_t: t, air_low: al, air_high: ah });
 }
 
 function toggleDev(id, checked) { if (id === "light") pub("power", 1); else pub("set", checked ? 1 : 0, id); }
@@ -297,7 +308,6 @@ $("btnConn").onclick = () => {
       const d = JSON.parse(msg.toString());
       $("debug").innerText = JSON.stringify(d, null, 2);
       
-      // ★ 修正：安全更新數值，防止崩潰
       const update = (id, val) => { if (val !== undefined && $(id)) $(id).innerText = val; };
 
       if(d.uptime && $("uptime")) $("uptime").innerText = d.uptime.split(" ")[0]; 
@@ -319,6 +329,10 @@ $("btnConn").onclick = () => {
       if(d.cfg_co2 !== undefined && document.activeElement.id !== "cfg_co2") $("cfg_co2").value = d.cfg_co2;
       if(d.cfg_soil !== undefined && document.activeElement.id !== "cfg_soil") $("cfg_soil").value = d.cfg_soil;
       if(d.cfg_time !== undefined && document.activeElement.id !== "cfg_time") $("cfg_time").value = d.cfg_time;
+      
+      // ★ 新增：更新網頁上的濕度設定顯示
+      if(d.cfg_air_low !== undefined && document.activeElement.id !== "cfg_air_low") $("cfg_air_low").value = d.cfg_air_low;
+      if(d.cfg_air_high !== undefined && document.activeElement.id !== "cfg_air_high") $("cfg_air_high").value = d.cfg_air_high;
 
       if (d.devs) {
         for (const [key, info] of Object.entries(d.devs)) {
