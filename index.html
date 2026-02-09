@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.13</title>
+<title>PlantLight Pro v10.14</title>
 
 <style>
 :root {
@@ -34,6 +34,8 @@ h1 { margin: 0; font-size: 22px; color: #111; font-weight: 800; display: flex; a
 .badge.ok { background: #dcfce7; color: #15803d; } 
 .badge.time { background: #e0f2fe; color: #0369a1; }
 .badge.run { background: #fef3c7; color: #d97706; }
+/* ★ 新增：天數顯示樣式 */
+.badge.day { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; font-size: 13px; font-weight: 800; }
 
 /* Mode Switch */
 .mode-switch { display: flex; background: #e5e7eb; border-radius: 12px; padding: 4px; margin-bottom: 16px; }
@@ -103,7 +105,7 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
     <div class="status-group">
       <div id="status" class="badge">未連線</div>
       <div class="badge-row">
-        <div id="uptime" class="badge run">--d --h</div>
+        <div id="dayBadge" class="badge day">🌱 Day --</div>
         <div id="time" class="badge time">--:--</div>
       </div>
     </div>
@@ -154,10 +156,15 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
     </div>
     
     <div class="card" id="cardCfg">
-      <h2>🛡️ 自動防護 (僅 Auto 模式)</h2>
+      <h2>🛡️ 參數設定 (Auto 模式)</h2>
+      
+      <div class="cfg-row" style="background:#eff6ff; padding:8px; border-radius:8px; margin-bottom:12px;">
+        <span style="flex:1; font-weight:700; color:#1e40af">🌱 開始種植日期</span>
+        <input type="date" id="plantDate" onchange="saveDate()" style="width:120px;">
+      </div>
+
       <div class="cfg-row"><span style="flex:1">CO2 低於 (ppm)</span><input type="number" id="cfg_co2" placeholder="500"></div>
       <div class="cfg-row"><span style="flex:1">土壤濕度 低於 (%)</span><input type="number" id="cfg_soil" placeholder="40"></div>
-      
       <div class="cfg-row"><span style="flex:1">空氣濕度 低於 (%) <small>(開霧)</small></span><input type="number" id="cfg_air_low" placeholder="50"></div>
       <div class="cfg-row"><span style="flex:1">空氣濕度 高於 (%) <small>(開扇)</small></span><input type="number" id="cfg_air_high" placeholder="70"></div>
       
@@ -211,6 +218,28 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 <script>
 let client = null;
 const $ = (id) => document.getElementById(id);
+
+// ★ 新增：讀取與計算天數
+if(localStorage.getItem("plantDate")) { 
+  $("plantDate").value = localStorage.getItem("plantDate");
+  calcDays();
+}
+
+function saveDate() {
+  localStorage.setItem("plantDate", $("plantDate").value);
+  calcDays();
+}
+
+function calcDays() {
+  const start = new Date($("plantDate").value);
+  const now = new Date();
+  if(!isNaN(start.getTime())) {
+    const diffTime = Math.abs(now - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    $("dayBadge").innerText = "🌱 Day " + diffDays;
+    $("dayBadge").classList.add("day");
+  }
+}
 
 if(localStorage.getItem("camIP")) { $("camIP").value = localStorage.getItem("camIP"); loadCam(); $("camCard").style.display = "block"; }
 function loadCam() { const ip = $("camIP").value.trim(); if(ip) { localStorage.setItem("camIP", ip); $("camStream").src = `http://${ip}/`; $("camCard").style.display = "block"; } }
@@ -267,14 +296,10 @@ function setCfg() {
   const c = parseInt($("cfg_co2").value);
   const s = parseInt($("cfg_soil").value);
   const t = parseInt($("cfg_time").value);
-  
-  // ★ 新增：取得空氣濕度輸入
   const al = parseInt($("cfg_air_low").value);
   const ah = parseInt($("cfg_air_high").value);
 
   if(isNaN(c) || isNaN(s) || isNaN(t) || isNaN(al) || isNaN(ah)) { alert("請輸入完整數值"); return; }
-  
-  // ★ 修改：發送空氣濕度設定
   pub("set_cfg", 0, null, { co2_th: c, soil_th: s, run_t: t, air_low: al, air_high: ah });
 }
 
@@ -310,7 +335,7 @@ $("btnConn").onclick = () => {
       
       const update = (id, val) => { if (val !== undefined && $(id)) $(id).innerText = val; };
 
-      if(d.uptime && $("uptime")) $("uptime").innerText = d.uptime.split(" ")[0]; 
+      // Uptime 不再需要顯示，我們改顯示「Day X」
       if(d.time) $("time").innerText = d.time;
       if(d.sys_mode !== undefined) updateModeUI(d.sys_mode);
       
@@ -330,7 +355,6 @@ $("btnConn").onclick = () => {
       if(d.cfg_soil !== undefined && document.activeElement.id !== "cfg_soil") $("cfg_soil").value = d.cfg_soil;
       if(d.cfg_time !== undefined && document.activeElement.id !== "cfg_time") $("cfg_time").value = d.cfg_time;
       
-      // ★ 新增：更新網頁上的濕度設定顯示
       if(d.cfg_air_low !== undefined && document.activeElement.id !== "cfg_air_low") $("cfg_air_low").value = d.cfg_air_low;
       if(d.cfg_air_high !== undefined && document.activeElement.id !== "cfg_air_high") $("cfg_air_high").value = d.cfg_air_high;
 
