@@ -1,313 +1,374 @@
-#include <Arduino.h>
-#include <HardwareSerial.h>
-#include <LiquidCrystal_I2C.h>
-#include <DHT.h>
-#include <Wire.h>
-#include <WiFi.h>
-#include <PubSubClient.h>
-#include <ArduinoJson.h>
-#include <time.h> 
-#include <HTTPClient.h>
-#include <WiFiClientSecure.h> 
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>PlantLight Pro v10.15</title>
 
-// ========= 1. 參數與 Google 設定 =========
-// ★★★ 請記得換回你自己的 Google Apps Script 網址 ★★★
-const char* google_script_url = "https://script.google.com/macros/s/你的網址在這/exec"; 
+<style>
+:root {
+  --bg: #f0f2f5; --card: #ffffff; --text: #1f2937;
+  --primary: #3b82f6; --success: #22c55e; --purple: #8b5cf6; --orange: #f97316; --danger: #ef4444;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08); --r: 16px;
+}
+body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, sans-serif; -webkit-tap-highlight-color: transparent; padding-bottom: 40px; }
+.container { max-width: 1200px; margin: 0 auto; padding: 16px; }
 
-// --- 自動化參數預設值 ---
-int auto_run_time = 300;       
-int th_co2_low = 500;          
-int th_soil_low = 40;
-int th_air_hum_low = 50;  
-int th_air_hum_high = 70; 
+/* Grid Layout */
+.grid-layout { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 768px) { .grid-layout { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1024px) { .grid-layout { grid-template-columns: 1fr 1fr 1fr; } }
 
-// --- 澆水設定 ---
-const int WATER_HOUR = 9;  // 每天早上 9 點澆水 (想改時間改這裡)
-const int WATER_MIN = 0;
-const int TIME_WATER_SEC = 120; // 澆水幾秒 (預設 120秒)
-const int TIME_FERT_SEC = 60;   // 澆肥料幾秒 (預設 60秒)
+/* Cards */
+.card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); padding: 16px; transition: 0.3s; }
+.card.disabled { opacity: 0.6; pointer-events: none; filter: grayscale(1); } 
 
-bool sys_auto_mode = true;     
+h2 { margin: 0 0 12px; font-size: 14px; color: #6b7280; font-weight: 700; letter-spacing: 0.5px; }
 
-const char* ssid = "NO1";
-const char* password = "x0x1x2x3x4";
-const char* mqtt_server = "broker.emqx.io";
-const String topicBase = "4125252";
-const String myKey = "9527";
+/* Header */
+header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+h1 { margin: 0; font-size: 22px; color: #111; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.status-group { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.badge-row { display: flex; gap: 6px; }
+.badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; background: #e5e7eb; color: #6b7280; font-weight: 600; font-family: monospace; }
+.badge.ok { background: #dcfce7; color: #15803d; } 
+.badge.time { background: #e0f2fe; color: #0369a1; }
+.badge.day { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; font-size: 13px; font-weight: 800; }
 
-// ========= 2. 硬體腳位 =========
-#define BTN_PAGE_NEXT 5
-#define BTN_PAGE_PREV 2
-#define ENCODER_A     18
-#define ENCODER_B     19
-#define ENCODER_SW    23
-#define LAMP_TX_PIN   25
-const long LAMP_BAUD = 9600;
+/* Mode Switch */
+.mode-switch { display: flex; background: #e5e7eb; border-radius: 12px; padding: 4px; margin-bottom: 16px; }
+.mode-btn { flex: 1; border: none; background: transparent; padding: 10px; border-radius: 8px; font-weight: 700; color: #6b7280; cursor: pointer; transition: 0.3s; font-size: 14px; }
+.mode-btn.active { background: #fff; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.mode-btn.active.manual { color: var(--danger); } 
 
-#define RS485_RX_PIN  26 
-#define RS485_TX_PIN  32 
-#define RS485_DE_PIN  33
+/* Connection */
+.conn-box { background: #fff; padding: 12px; border-radius: var(--r); box-shadow: var(--shadow); margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+.input-row { display: flex; gap: 10px; }
+input { padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; outline: none; background: #f9fafb; font-size: 15px; width: 100%; box-sizing: border-box; }
+input:focus { border-color: var(--primary); background: #fff; }
+button { border: none; cursor: pointer; font-weight: 600; border-radius: 8px; transition: 0.2s; }
+.btn-main { background: var(--primary); color: #fff; padding: 0 20px; font-size: 15px; }
 
-#define PIN_DHT       4
-#define PIN_MHZ19     34
-#define PIN_TEMT6000  35
-#define PIN_MIST      15
-#define PIN_RELAY_IN  12
-#define PIN_RELAY_OUT 13
-#define PIN_RELAY_PUMP 14
-#define PIN_RELAY_RES 27
+/* Sensors */
+.sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.s-box { background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9; position: relative; }
+.s-val { font-size: 22px; font-weight: 800; color: #333; line-height: 1.2; }
+.s-val small { font-size: 12px; font-weight: 500; color: #9ca3af; margin-left: 2px; }
+.s-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+.s-icon { position: absolute; top: 10px; right: 10px; font-size: 18px; opacity: 0.3; }
 
-// 裝置定義 (注意: devs[5] 是液肥/Aux)
-struct Device { String name; int pin; bool state; unsigned long startTime; unsigned long timerSec; bool cycleMode; int cycleOnMin; int cycleOffMin; bool cycleIsOnPhase; unsigned long cycleNextSwitch; };
-Device devs[6] = {
-  {"light", -1, false, 0, 0, false, 0, 0, false, 0},
-  {"mist", PIN_MIST, false, 0, 0, false, 0, 0, false, 0},
-  {"fan_in", PIN_RELAY_IN, false, 0, 0, false, 0, 0, false, 0},
-  {"fan_out", PIN_RELAY_OUT, false, 0, 0, false, 0, 0, false, 0},
-  {"pump", PIN_RELAY_PUMP, false, 0, 0, false, 5, 30, false, 0}, 
-  {"aux", PIN_RELAY_RES, false, 0, 0, false, 0, 0, false, 0}
-};
+/* Devices */
+.dev-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+.dev-row:last-child { border-bottom: none; padding-bottom: 0; }
+.dev-left { display: flex; align-items: center; gap: 12px; }
+.dev-icon { width: 38px; height: 38px; background: #f1f5f9; border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
+.dev-info { display: flex; flex-direction: column; gap: 2px; }
+.dev-name { font-weight: 600; font-size: 15px; color: #333; display: flex; align-items: center; gap: 6px; }
+.tag-group { display: flex; gap: 4px; flex-wrap: wrap; }
+.tag { font-size: 10px; padding: 2px 5px; border-radius: 4px; display: none; white-space: nowrap; }
+.tag.run { background: #f3e8ff; color: #7e22ce; }
+.tag.rem { background: #fee2e2; color: #b91c1c; }
+.tag.cyc { background: #ffedd5; color: #c2410c; }
 
-int sched_on_h=8; int sched_on_m=0; int sched_off_h=18; int sched_off_m=0; bool sched_enabled=false;
+.switch { position: relative; display: inline-block; width: 44px; height: 26px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+input:checked + .slider { background-color: var(--success); }
+input:checked + .slider:before { transform: translateX(18px); }
 
-HardwareSerial LampSerial(2);
-HardwareSerial SoilSerial(1);
-LiquidCrystal_I2C lcd(0x3F, 16, 2);
-DHT dht(PIN_DHT, DHT11);
-WiFiClient espClient;
-PubSubClient client(espClient);
+/* Schedule */
+.sched-box { background: #f8fafc; padding: 12px; border-radius: 10px; margin-top: 15px; border: 1px dashed #cbd5e1; }
+.sched-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 
-const uint8_t BRIGHT_CODES[] = { 0x28, 0x27, 0x26, 0x25, 0x24, 0x23, 0x22, 0x21, 0x20, 0x1F, 0x1E, 0x1D, 0x1C, 0x1B, 0x1A, 0x19, 0x18, 0x17 };
-const int MAX_BRIGHT_IDX = 17;
-int currentBrightIdx=0; int currentSpectrum=1;
-float air_t=0, air_h=0; int co2=0, lux=0;
-int luxMin=0, luxMax=4095;
-float soil_h=0, soil_t=0, soil_ph=0; int soil_ec=0;
+.cfg-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 14px; color: #555; }
+.cfg-row input { padding: 6px; width: 70px; text-align: center; }
 
-enum TargetItem { ITEM_BRIGHTNESS, ITEM_SPECTRUM, ITEM_MIST, ITEM_FAN_IN, ITEM_FAN_OUT, ITEM_PUMP, ITEM_RESERVED };
-TargetItem currentTarget = ITEM_BRIGHTNESS; 
-bool isEditing=false; int currentPage=0;
-unsigned long lastSensor=0, lastTimerTick=0, lastPageBtnTime=0, encoderBtnTimer=0, lastSendTime=0, lastEncoderTime=0; 
-unsigned long lastGoogleLogTime=0; 
-bool isEncoderBtnPressed=false, needToPublish=false;
-int lastSentValue=-1;
+/* Camera */
+.cam-container { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 12px; overflow: hidden; margin-top: 10px; }
+.cam-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+.cam-overlay { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.6); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; pointer-events: none; }
 
-StaticJsonDocument<2048> doc;
-char jsonBuffer[2048];
+#debug { display: none; background: #111; color: #0f0; padding: 12px; margin-top: 20px; border-radius: 8px; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+.btn-sm { font-size: 12px; padding: 3px 8px; background: #eff6ff; color: var(--primary); border-radius: 6px; }
+.btn-cyc { font-size: 12px; padding: 3px 8px; background: #ffedd5; color: var(--orange); border-radius: 6px; }
+</style>
+</head>
+<body>
 
-// 函式宣告
-void updateDeviceState(int id, bool on);
-void sendState();
-void sendLogToGoogle(); 
-void callback(char* topic, byte* payload, unsigned int length);
-void readSensors(); void readSoilSensor(); void checkAutoProtection();
-void sendLampByte(uint8_t code, bool repeat);
-void handleEncoder(); void handleEncoderButton(); void handlePageButtons(); void updateLCD();
-void checkSmartSchedule(); // ★ 新增：智慧排程函式
-String getUptime(); String getLocalTimeStr(); String getFullDateTimeStr();
+<div class="container">
+  <header>
+    <h1>🌱 PlantLight</h1>
+    <div class="status-group">
+      <div id="status" class="badge">未連線</div>
+      <div class="badge-row">
+        <div id="dayBadge" class="badge day">🌱 Day --</div>
+        <div id="time" class="badge time">--:--</div>
+      </div>
+    </div>
+  </header>
 
-void setup() {
-  Serial.begin(115200);
-  Serial.println("\n\nSystem v10.18 SMART STARTING");
+  <div class="conn-box">
+    <input type="text" id="base" value="4125252" placeholder="Topic ID (e.g. 4125252)">
+    <div class="input-row">
+      <input type="password" id="key" value="9527" placeholder="Key" style="flex:1">
+      <button class="btn-main" id="btnConn">連線</button>
+    </div>
+  </div>
 
-  LampSerial.begin(LAMP_BAUD, SERIAL_8N1, 16, LAMP_TX_PIN); 
-  SoilSerial.begin(9600, SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
+  <div class="mode-switch">
+    <button id="modeAuto" class="mode-btn active" onclick="setSysMode(1)">🤖 自動模式 (Auto)</button>
+    <button id="modeManual" class="mode-btn" onclick="setSysMode(0)">🖐 手動模式 (Manual)</button>
+  </div>
 
-  pinMode(BTN_PAGE_NEXT, INPUT_PULLUP); 
-  pinMode(BTN_PAGE_PREV, INPUT_PULLDOWN); // ★ 已修正按鈕亂跳問題
-  pinMode(ENCODER_A, INPUT_PULLUP); pinMode(ENCODER_B, INPUT_PULLUP); pinMode(ENCODER_SW, INPUT_PULLUP);
-  pinMode(PIN_MHZ19, INPUT);
-  pinMode(RS485_DE_PIN, OUTPUT); digitalWrite(RS485_DE_PIN, LOW);
+  <div class="grid-layout">
+    
+    <div class="card" style="display:none" id="camCard">
+      <h2>📷 即時監控</h2>
+      <input type="text" id="camIP" placeholder="輸入 ESP32-CAM IP" onchange="loadCam()" style="font-size:13px; padding:8px;">
+      <div class="cam-container">
+        <img id="camStream" class="cam-view" src="" alt="Offline">
+        <div class="cam-overlay">LIVE</div>
+      </div>
+    </div>
 
-  for(int i=1; i<6; i++) { pinMode(devs[i].pin, OUTPUT); digitalWrite(devs[i].pin, LOW); }
+    <div class="card">
+      <h2>📊 空氣品質 (Air)</h2>
+      <div class="sensor-grid">
+        <div class="s-box"><div class="s-val"><span id="t">--</span><small>°C</small></div><div class="s-label">溫度</div><span class="s-icon">🌡</span></div>
+        <div class="s-box"><div class="s-val"><span id="h">--</span><small>%</small></div><div class="s-label">濕度</div><span class="s-icon">💧</span></div>
+        <div class="s-box"><div class="s-val"><span id="co2">--</span><small>ppm</small></div><div class="s-label">CO2</div><span class="s-icon">☁️</span></div>
+        <div class="s-box"><div class="s-val"><span id="lux">--</span><small>Lux</small></div><div class="s-label">光照</div><span class="s-icon">☀️</span></div>
+      </div>
+    </div>
 
-  Wire.begin(21, 22); lcd.init(); lcd.backlight(); dht.begin();
+    <div class="card">
+      <h2>🌱 土壤監測 (Soil)</h2>
+      <div class="sensor-grid">
+        <div class="s-box"><div class="s-val"><span id="s_h">--</span><small>%</small></div><div class="s-label">濕度</div><span class="s-icon">💧</span></div>
+        <div class="s-box"><div class="s-val"><span id="s_t">--</span><small>°C</small></div><div class="s-label">溫度</div><span class="s-icon">🌡</span></div>
+        <div class="s-box"><div class="s-val"><span id="s_ph">--</span><small>pH</small></div><div class="s-label">酸鹼</div><span class="s-icon">🧪</span></div>
+        <div class="s-box"><div class="s-val"><span id="s_ec">--</span><small>us</small></div><div class="s-label">電導</div><span class="s-icon">⚡</span></div>
+      </div>
+    </div>
+    
+    <div class="card" id="cardCfg">
+      <h2>🛡️ 參數設定 (Auto 模式)</h2>
+      
+      <div class="cfg-row" style="background:#eff6ff; padding:8px; border-radius:8px; margin-bottom:12px;">
+        <span style="flex:1; font-weight:700; color:#1e40af">🌱 開始種植日期</span>
+        <input type="date" id="plantDate" onchange="saveDate()" style="width:120px;">
+      </div>
+
+      <div class="cfg-row"><span style="flex:1">CO2 低於 (ppm)</span><input type="number" id="cfg_co2" placeholder="500"></div>
+      <div class="cfg-row"><span style="flex:1">土壤濕度 低於 (%)</span><input type="number" id="cfg_soil" placeholder="40"></div>
+      <div class="cfg-row"><span style="flex:1">空氣濕度 低於 (%) <small>(開霧)</small></span><input type="number" id="cfg_air_low" placeholder="50"></div>
+      <div class="cfg-row"><span style="flex:1">空氣濕度 高於 (%) <small>(開扇)</small></span><input type="number" id="cfg_air_high" placeholder="70"></div>
+      
+      <hr style="border:0; border-top:1px dashed #ccc; margin:12px 0;">
+      <h3 style="font-size:13px; color:#6b7280; margin-bottom:8px">🚿 澆灌排程 (每日一次)</h3>
+      <div class="cfg-row"><span style="flex:1">每日澆水時間 (點)</span><input type="number" id="cfg_w_h" placeholder="9"></div>
+      <div class="cfg-row"><span style="flex:1">一般澆水時長 (秒)</span><input type="number" id="cfg_w_t" placeholder="120"></div>
+      <div class="cfg-row"><span style="flex:1">週三施肥時長 (秒)</span><input type="number" id="cfg_f_t" placeholder="60"></div>
+
+      <div class="cfg-row"><span style="flex:1">自動保護執行 (秒)</span><input type="number" id="cfg_time" placeholder="300"></div>
+      
+      <button onclick="setCfg()" style="width:100%;margin-top:8px;padding:8px;background:var(--purple);color:#fff;border-radius:8px;border:none;cursor:pointer">儲存全部設定</button>
+      <button onclick="pub('upload',1)" style="width:100%;margin-top:16px;padding:12px;background:#8b5cf6;color:#fff;border-radius:8px;border:none;cursor:pointer;font-weight:bold;box-shadow:0 4px 6px rgba(139, 92, 246, 0.25)">☁️ 手動上傳至 Google Sheets</button>
+    </div>
+
+    <div class="card">
+      <h2>⚙️ 設備控制</h2>
+      <div id="dev-list"></div>
+    </div>
+
+    <div class="card" id="cardSched">
+      <h2>💡 燈光 & 排程 (僅 Auto 模式)</h2>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;font-weight:700"><span>亮度</span><span id="briVal" style="color:var(--primary)">50%</span></div>
+        <input type="range" id="bri" min="0" max="100" value="50" style="width:100%">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;font-weight:700"><span>光譜</span><span id="specVal" style="color:var(--primary)">1</span></div>
+        <input type="range" id="spec" min="1" max="21" value="1" style="width:100%">
+      </div>
+      <div class="sched-box">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:700;font-size:13px;color:#555">📅 每日定時</span>
+          <label class="switch" style="transform:scale(0.8)"><input type="checkbox" id="sch_en" onchange="setSched()"><span class="slider"></span></label>
+        </div>
+        <div class="sched-row">
+          <input type="time" id="sch_on" value="08:00" style="flex:1">
+          <span style="font-size:12px;color:#999">至</span>
+          <input type="time" id="sch_off" value="18:00" style="flex:1">
+          <button onclick="setSched()" style="background:var(--primary);color:#fff;font-size:12px;padding:6px 12px">設定</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:16px">
+        <button onclick="pub('cal_dark',1)" style="flex:1;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:12px">校正 (0 Lux)</button>
+        <button onclick="pub('cal_bright',1)" style="flex:1;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:12px">校正 (2000 Lux)</button>
+      </div>
+    </div>
+
+  </div>
   
-  lcd.setCursor(0,0); lcd.print("WiFi Connecting");
-  WiFi.begin(ssid, password);
-  long start = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) { delay(500); Serial.print("."); }
-  if(WiFi.status() == WL_CONNECTED) { Serial.println("\nWiFi Connected!"); }
-  
-  configTime(28800, 0, "pool.ntp.org", "time.google.com");
-  
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
-  client.setBufferSize(2048); 
-  
-  lcd.clear(); lcd.print("System v10.18"); delay(1000); updateLCD();
+  <div style="text-align:center; margin-top:30px">
+    <a href="#" onclick="$('debug').style.display='block';return false;" style="color:#cbd5e1;font-size:12px;text-decoration:none">Debug Log</a>
+    <pre id="debug"></pre>
+  </div>
+</div>
+
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script>
+let client = null;
+const $ = (id) => document.getElementById(id);
+
+// 讀取日期
+if(localStorage.getItem("plantDate")) { $("plantDate").value = localStorage.getItem("plantDate"); calcDays(); }
+function saveDate() { localStorage.setItem("plantDate", $("plantDate").value); calcDays(); }
+function calcDays() { const s=new Date($("plantDate").value); const n=new Date(); if(!isNaN(s.getTime())){ const d=Math.ceil(Math.abs(n-s)/(86400000)); $("dayBadge").innerText="🌱 Day "+d; $("dayBadge").classList.add("day"); } }
+
+if(localStorage.getItem("camIP")) { $("camIP").value = localStorage.getItem("camIP"); loadCam(); $("camCard").style.display = "block"; }
+function loadCam() { const ip = $("camIP").value.trim(); if(ip) { localStorage.setItem("camIP", ip); $("camStream").src = `http://${ip}/`; $("camCard").style.display = "block"; } }
+
+const devices = [
+  { id: "light",   name: "植物燈", icon: "💡" },
+  { id: "mist",    name: "加濕器", icon: "🌫" },
+  { id: "fan_in",  name: "進風",   icon: "🍃" },
+  { id: "fan_out", name: "排風",   icon: "🌪" },
+  { id: "pump",    name: "水泵",   icon: "🚰", cycle: true },
+  { id: "aux",     name: "液肥",   icon: "🧪", cycle: true }
+];
+
+const devContainer = $("dev-list");
+devices.forEach(d => {
+  let extra = `<button class="btn-sm" onclick="setTimer('${d.id}')">⏱</button>`;
+  if(d.cycle) extra += `<button class="btn-cyc" onclick="setCycle('${d.id}')">🔄</button>`;
+  const html = `
+    <div class="dev-row">
+      <div class="dev-left">
+        <div class="dev-icon">${d.icon}</div>
+        <div class="dev-info">
+          <div class="dev-name">${d.name} <div style="display:flex;gap:4px">${extra}</div></div>
+          <div class="tag-group">
+            <span id="run_${d.id}" class="tag run"></span>
+            <span id="rem_${d.id}" class="tag rem"></span>
+            <span id="cyc_${d.id}" class="tag cyc">循環</span>
+          </div>
+        </div>
+      </div>
+      <label class="switch"><input type="checkbox" id="sw_${d.id}" onchange="toggleDev('${d.id}', this.checked)"><span class="slider"></span></label>
+    </div>
+  `;
+  devContainer.insertAdjacentHTML('beforeend', html);
+});
+
+function pub(op, val, target=null, extra={}){
+  if(!client || !client.connected) { alert("請先連線！"); return; }
+  const payload = { key: $("key").value.trim(), op: op, v: val, ...extra };
+  if(target) payload.target = target;
+  client.publish($("base").value.trim() + "/cmd", JSON.stringify(payload));
 }
 
-void loop() {
-  if (WiFi.status() == WL_CONNECTED) {
-    if (!client.connected()) {
-      if (client.connect("ESP32_Pro_Plant", (topicBase+"/cmd").c_str(), 0, false, "offline")) {
-        client.subscribe((topicBase+"/cmd").c_str());
-      }
-    }
-    client.loop();
-  }
+function setSysMode(m) { pub("sys_mode", m); updateModeUI(m); }
 
-  if (Serial.available()) { if (Serial.read() == '1') sendLogToGoogle(); }
+function updateModeUI(m) {
+  const isAuto = (m == 1);
+  $("modeAuto").className = isAuto ? "mode-btn active" : "mode-btn";
+  $("modeManual").className = !isAuto ? "mode-btn active manual" : "mode-btn";
+  if(!isAuto) { $("cardCfg").classList.add("disabled"); } else { $("cardCfg").classList.remove("disabled"); }
+}
 
-  handlePageButtons();
-  if (currentPage == 0) { handleEncoder(); handleEncoderButton(); }
-  if (needToPublish) { sendState(); needToPublish = false; }
+function setCfg() {
+  const c = parseInt($("cfg_co2").value);
+  const s = parseInt($("cfg_soil").value);
+  const t = parseInt($("cfg_time").value);
+  const al = parseInt($("cfg_air_low").value);
+  const ah = parseInt($("cfg_air_high").value);
+  // ★ 新增參數
+  const wh = parseInt($("cfg_w_h").value);
+  const wt = parseInt($("cfg_w_t").value);
+  const ft = parseInt($("cfg_f_t").value);
 
-  if (millis() - lastTimerTick > 1000) {
-    lastTimerTick = millis();
-    bool changed = false;
-    
-    // ★ 檢查智慧排程 (只在自動模式下)
-    if (sys_auto_mode) {
-      checkSmartSchedule();
-    }
+  if(isNaN(c)||isNaN(s)||isNaN(t)||isNaN(al)||isNaN(ah)||isNaN(wh)||isNaN(wt)||isNaN(ft)) { alert("請輸入完整數值"); return; }
+  
+  // 發送所有設定
+  pub("set_cfg", 0, null, { 
+    co2_th: c, soil_th: s, run_t: t, air_low: al, air_high: ah,
+    w_h: wh, w_t: wt, f_t: ft 
+  });
+}
 
-    // 倒數計時器邏輯
-    for (int i=0; i<6; i++) {
-      if (devs[i].timerSec > 0) {
-        devs[i].timerSec--;
-        if (devs[i].timerSec == 0) { updateDeviceState(i, false); changed = true; }
-      }
-      else if (devs[i].cycleMode) {
-        if (millis() > devs[i].cycleNextSwitch) {
-          if (devs[i].cycleIsOnPhase) { updateDeviceState(i, false); devs[i].cycleIsOnPhase = false; devs[i].cycleNextSwitch = millis() + (devs[i].cycleOffMin * 60000UL); } 
-          else { updateDeviceState(i, true); devs[i].cycleIsOnPhase = true; devs[i].cycleNextSwitch = millis() + (devs[i].cycleOnMin * 60000UL); }
-          changed = true;
+function toggleDev(id, checked) { if (id === "light") pub("power", 1); else pub("set", checked ? 1 : 0, id); }
+function setTimer(id) { let min = prompt(`[${id}] 倒數定時 (分鐘)：`, "10"); if (min != null) pub("timer", parseInt(min), id); }
+function setCycle(id) { if(confirm(`啟動 [${id}] 循環 (開5分/停30分)？`)) pub("cycle", 1, id); else pub("cycle", 0, id); }
+function setSched() {
+  const onT = $("sch_on").value.replace(":","");
+  const offT = $("sch_off").value.replace(":","");
+  pub("sched_set", $("sch_en").checked ? 1 : 0, null, { on: parseInt(onT), off: parseInt(offT) });
+}
+function fmtTime(s) {
+  if(s <= 0) return "";
+  const h = Math.floor(s/3600); const m = Math.floor((s%3600)/60);
+  return h>0 ? `${h}時${m}分` : `${m}分`;
+}
+
+$("bri").onchange = (e) => pub("bright_pct", parseInt(e.target.value));
+$("bri").oninput = (e) => $("briVal").innerText = e.target.value + "%";
+$("spec").onchange = (e) => pub("spec", parseInt(e.target.value));
+$("spec").oninput = (e) => $("specVal").innerText = e.target.value;
+
+$("btnConn").onclick = () => {
+  const btn = $("btnConn"); const badge = $("status");
+  if(client){ client.end(); client = null; btn.innerText = "連線"; badge.innerText = "未連線"; badge.className = "badge"; return; }
+  btn.innerText = "...";
+  client = mqtt.connect("wss://broker.emqx.io:8084/mqtt", { clientId: "web_" + Math.random().toString(16).substr(2, 8) });
+  client.on("connect", () => { btn.innerText = "斷線"; badge.innerText = "已連線"; badge.className = "badge ok"; client.subscribe($("base").value.trim() + "/state"); });
+  client.on("message", (topic, msg) => {
+    try {
+      const d = JSON.parse(msg.toString());
+      $("debug").innerText = JSON.stringify(d, null, 2);
+      
+      const update = (id, val) => { if (val !== undefined && $(id)) $(id).innerText = val; };
+
+      if(d.time) $("time").innerText = d.time;
+      if(d.sys_mode !== undefined) updateModeUI(d.sys_mode);
+      
+      update("t", d.t); update("h", d.h);
+      update("co2", d.co2); update("lux", d.lux_rel);
+      update("s_h", d.s_h); update("s_t", d.s_t);
+      update("s_ph", d.s_ph); update("s_ec", d.s_ec);
+      
+      if(d.bri_pct) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
+      if(d.spec) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
+      if(d.sch_en !== undefined) $("sch_en").checked = (d.sch_en == 1);
+      
+      if(d.sch_on && document.activeElement.id !== "sch_on") $("sch_on").value = d.sch_on;
+      if(d.sch_off && document.activeElement.id !== "sch_off") $("sch_off").value = d.sch_off;
+
+      if(d.cfg_co2 !== undefined && document.activeElement.id !== "cfg_co2") $("cfg_co2").value = d.cfg_co2;
+      if(d.cfg_soil !== undefined && document.activeElement.id !== "cfg_soil") $("cfg_soil").value = d.cfg_soil;
+      if(d.cfg_time !== undefined && document.activeElement.id !== "cfg_time") $("cfg_time").value = d.cfg_time;
+      if(d.cfg_air_low !== undefined && document.activeElement.id !== "cfg_air_low") $("cfg_air_low").value = d.cfg_air_low;
+      if(d.cfg_air_high !== undefined && document.activeElement.id !== "cfg_air_high") $("cfg_air_high").value = d.cfg_air_high;
+
+      // ★ 新增：接收並更新網頁上的澆灌參數
+      if(d.cfg_w_h !== undefined && document.activeElement.id !== "cfg_w_h") $("cfg_w_h").value = d.cfg_w_h;
+      if(d.cfg_w_t !== undefined && document.activeElement.id !== "cfg_w_t") $("cfg_w_t").value = d.cfg_w_t;
+      if(d.cfg_f_t !== undefined && document.activeElement.id !== "cfg_f_t") $("cfg_f_t").value = d.cfg_f_t;
+
+      if (d.devs) {
+        for (const [key, info] of Object.entries(d.devs)) {
+          const sw = $("sw_" + key); if (sw) sw.checked = (info.s === 1);
+          const runTag = $("run_" + key); if (runTag) { runTag.style.display = info.s ? "inline-block" : "none"; runTag.innerText = fmtTime(info.run); }
+          const remTag = $("rem_" + key); if (remTag) { remTag.style.display = (info.rem > 0) ? "inline-block" : "none"; remTag.innerText = "剩" + Math.ceil(info.rem/60) + "分"; }
+          const cycTag = $("cyc_" + key); if (cycTag) { cycTag.style.display = (info.cyc === 1) ? "inline-block" : "none"; }
         }
       }
-    }
-    if (changed) sendState();
-  }
-  
-  if (millis() - lastGoogleLogTime > 3600000) {
-    lastGoogleLogTime = millis();
-    if (WiFi.status() == WL_CONNECTED) sendLogToGoogle();
-  }
-
-  if (millis() - lastSensor > 3000) {
-    lastSensor = millis();
-    readSensors(); 
-    readSoilSensor();
-    if (sys_auto_mode) checkAutoProtection(); 
-    if (client.connected()) sendState(); 
-    if (currentPage > 0) updateLCD();
-  }
-}
-
-// ★★★ 核心邏輯：智慧排程中心 ★★★
-void checkSmartSchedule() {
-  struct tm t; 
-  if(!getLocalTime(&t)) return;
-
-  // 1. 夜間補光邏輯：22:00 ~ 01:00 (10分暗 / 20分亮)
-  // 檢查是否在指定的小時內 (22點, 23點, 00點)
-  if (t.tm_hour == 22 || t.tm_hour == 23 || t.tm_hour == 0) {
-    int m = t.tm_min;
-    // 每個小時切成兩個 30 分鐘區塊
-    // 0~9分: 暗, 10~29分: 亮, 30~39分: 暗, 40~59分: 亮
-    // 利用餘數算法：分鐘數除以 30，餘數小於 10 就關，大於等於 10 就開
-    int remainder = m % 30;
-    
-    if (remainder < 10) {
-      // 休息時間 (暗)
-      if (devs[0].state) updateDeviceState(0, false);
-    } else {
-      // 工作時間 (亮)
-      if (!devs[0].state) updateDeviceState(0, true);
-    }
-  } 
-  // 如果開啟了普通排程且不在夜間模式，則交給普通排程控制，這裡不做強制關閉以免衝突
-
-  // 2. 澆水/施肥邏輯 (指定時間觸發一次)
-  // 設定為每天早上 WATER_HOUR 點 WATER_MIN 分 00 秒 觸發
-  if (t.tm_hour == WATER_HOUR && t.tm_min == WATER_MIN && t.tm_sec == 0) {
-    // 判斷星期幾 (tm_wday: 0=週日, 1=週一, ... 3=週三, ... 6=週六)
-    if (t.tm_wday == 3) {
-      // === 星期三：澆肥料 (Aux) ===
-      Serial.println("Wed: Fertilizing...");
-      devs[5].timerSec = TIME_FERT_SEC; // 設定倒數秒數
-      updateDeviceState(5, true);       // 開啟液肥泵
-    } else {
-      // === 其他天：澆水 (Pump) ===
-      Serial.println("Other Day: Watering...");
-      devs[4].timerSec = TIME_WATER_SEC; // 設定倒數秒數
-      updateDeviceState(4, true);        // 開啟水泵
-    }
-  }
-}
-
-void sendLogToGoogle() {
-  lcd.setCursor(14, 0); lcd.print("Up");
-  WiFiClientSecure clientSecure; clientSecure.setInsecure(); HTTPClient http;
-  http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS); http.setTimeout(10000); 
-  if (http.begin(clientSecure, google_script_url)) {
-    http.addHeader("Content-Type", "application/json");
-    StaticJsonDocument<512> logDoc;
-    logDoc["time"] = getFullDateTimeStr();
-    logDoc["t"] = air_t; logDoc["h"] = air_h; logDoc["co2"] = co2; logDoc["lux"] = lux;
-    logDoc["s_h"] = soil_h; logDoc["s_t"] = soil_t; logDoc["s_ph"] = soil_ph; logDoc["s_ec"] = soil_ec;
-    logDoc["bri"] = map(currentBrightIdx, 0, MAX_BRIGHT_IDX, 0, 100); logDoc["spec"] = currentSpectrum;
-    String jsonStr; serializeJson(logDoc, jsonStr);
-    http.POST(jsonStr); http.end();
-  }
-  lcd.setCursor(14, 0); lcd.print("  ");
-}
-
-void checkAutoProtection() {
-  if (co2 > 0 && co2 < th_co2_low) { if (!devs[2].state) { devs[2].timerSec = auto_run_time; updateDeviceState(2, true); } if (!devs[3].state) { devs[3].timerSec = auto_run_time; updateDeviceState(3, true); } }
-  if (soil_h > 0 && soil_h < th_soil_low) { if (!devs[4].state) { devs[4].timerSec = auto_run_time; updateDeviceState(4, true); } }
-  if (air_h > 0) { if (air_h < th_air_hum_low) { if (!devs[1].state) { devs[1].timerSec = auto_run_time; updateDeviceState(1, true); } } else if (air_h > th_air_hum_high) { if (!devs[3].state) { devs[3].timerSec = auto_run_time; updateDeviceState(3, true); } } }
-}
-
-void updateDeviceState(int id, bool on) {
-  if (devs[id].state != on) {
-    devs[id].state = on; if (on) devs[id].startTime = millis();
-    if (id == 0) sendLampByte(0x29, false); else digitalWrite(devs[id].pin, on ? HIGH : LOW);
-    needToPublish = true; updateLCD(); 
-  }
-}
-
-void callback(char* topic, byte* payload, unsigned int length) {
-  doc.clear(); deserializeJson(doc, payload, length);
-  if (doc["key"].as<String>() != myKey) return;
-  String op = doc["op"].as<String>(); int val = doc["v"]; String target = doc["target"].as<String>();
-  if (op == "upload") { sendLogToGoogle(); } 
-  else if (op == "sys_mode") { sys_auto_mode = (val == 1); needToPublish = true; }
-  else if (op == "bright_pct") { currentBrightIdx = map(val, 0, 100, 0, MAX_BRIGHT_IDX); sendLampByte(BRIGHT_CODES[currentBrightIdx], true); needToPublish=true; } 
-  else if (op == "spec") { currentSpectrum = constrain(val, 1, 21); sendLampByte((uint8_t)currentSpectrum, true); needToPublish=true; }
-  else if (op == "cal_dark") { luxMin = analogRead(PIN_TEMT6000); needToPublish=true; }
-  else if (op == "cal_bright") { luxMax = analogRead(PIN_TEMT6000); needToPublish=true; }
-  else if (op == "power") { updateDeviceState(0, !devs[0].state); } 
-  else if (op == "set") { for(int i=0; i<6; i++) { if (devs[i].name == target) { updateDeviceState(i, val > 0); break; } } }
-  else if (op == "timer") { for(int i=0; i<6; i++) { if (devs[i].name == target) { devs[i].cycleMode = false; if (val > 0) { devs[i].timerSec = val * 60; updateDeviceState(i, true); } else { devs[i].timerSec = 0; } needToPublish=true; break; }}}
-  else if (op == "cycle") { for(int i=0; i<6; i++) { if (devs[i].name == target) { devs[i].timerSec = 0; if (val > 0) { devs[i].cycleMode = true; updateDeviceState(i, true); devs[i].cycleIsOnPhase = true; devs[i].cycleNextSwitch = millis() + (devs[i].cycleOnMin * 60000UL); } else { devs[i].cycleMode = false; updateDeviceState(i, false); } needToPublish=true; }}}
-  else if (op == "sched_set") { int onT = doc["on"]; int offT = doc["off"]; sched_on_h = onT / 100; sched_on_m = onT % 100; sched_off_h = offT / 100; sched_off_m = offT % 100; sched_enabled = (val > 0); needToPublish = true; }
-  else if (op == "set_cfg") { if (doc["co2_th"]) th_co2_low = doc["co2_th"]; if (doc["soil_th"]) th_soil_low = doc["soil_th"]; if (doc["run_t"]) auto_run_time = doc["run_t"]; if (doc["air_low"]) th_air_hum_low = doc["air_low"]; if (doc["air_high"]) th_air_hum_high = doc["air_high"]; needToPublish = true; }
-}
-
-void sendState() {
-  doc.clear();
-  doc["time"] = getLocalTimeStr(); doc["uptime"] = getUptime(); doc["sys_mode"] = sys_auto_mode ? 1 : 0; 
-  doc["t"] = air_t; doc["h"] = air_h; doc["co2"] = co2; doc["lux_rel"] = lux;
-  doc["s_t"] = soil_t; doc["s_h"] = soil_h; doc["s_ph"] = soil_ph; doc["s_ec"] = soil_ec;
-  doc["bri_pct"] = map(currentBrightIdx, 0, MAX_BRIGHT_IDX, 0, 100); doc["spec"] = currentSpectrum;
-  doc["sch_en"] = sched_enabled ? 1 : 0;
-  char buf[20]; sprintf(buf, "%02d:%02d", sched_on_h, sched_on_m); doc["sch_on"] = String(buf); sprintf(buf, "%02d:%02d", sched_off_h, sched_off_m); doc["sch_off"] = String(buf);
-  doc["cfg_co2"] = th_co2_low; doc["cfg_soil"] = th_soil_low; doc["cfg_time"] = auto_run_time;
-  doc["cfg_air_low"] = th_air_hum_low; doc["cfg_air_high"] = th_air_hum_high; 
-  JsonObject devObj = doc.createNestedObject("devs"); unsigned long now = millis();
-  for(int i=0; i<6; i++) { JsonObject d = devObj.createNestedObject(devs[i].name); d["s"] = devs[i].state ? 1 : 0; d["run"] = devs[i].state ? (now - devs[i].startTime)/1000 : 0; d["rem"] = devs[i].timerSec; d["cyc"] = devs[i].cycleMode ? 1 : 0; }
-  serializeJson(doc, jsonBuffer); client.publish((topicBase + "/state").c_str(), jsonBuffer);
-}
-
-String getUptime() { unsigned long s = millis()/1000; int d=s/86400; int h=(s%86400)/3600; int m=(s%3600)/60; char b[20]; sprintf(b, "%dd %02dh %02dm", d, h, m); return String(b); }
-String getLocalTimeStr() { struct tm t; if(!getLocalTime(&t)) return "--:--"; char b[10]; strftime(b, 10, "%H:%M", &t); return String(b); }
-String getFullDateTimeStr() { struct tm t; if(!getLocalTime(&t)) return "N/A"; char b[25]; strftime(b, 25, "%Y/%m/%d %H:%M:%S", &t); return String(b); }
-void readSoilSensor() { byte q[]={0x01,0x03,0x00,0x00,0x00,0x04,0x44,0x09}; digitalWrite(33,1); delay(5); SoilSerial.write(q,8); SoilSerial.flush(); delay(5); digitalWrite(33,0); unsigned long t=millis(); while(SoilSerial.available()<13 && millis()-t<1000) delay(10); if(SoilSerial.available()>=13){byte b[13];SoilSerial.readBytes(b,13);if(b[0]==1){soil_h=(b[3]<<8|b[4])/10.0;soil_t=(b[5]<<8|b[6])/10.0;soil_ec=(b[7]<<8|b[8]);soil_ph=(b[9]<<8|b[10])/10.0;}else{while(SoilSerial.available())SoilSerial.read();}}}
-void readSensors() { air_t=dht.readTemperature(); air_h=dht.readHumidity(); int r=analogRead(35); lux=map(constrain(r,luxMin,luxMax),luxMin,luxMax,0,10000); unsigned long d=pulseIn(34,1,1100000); if(d>0) co2=5000*(d-2000)/(1000000-4000); }
-void sendLampByte(uint8_t c, bool r) { if(millis()-lastSendTime<150)return; if(c==lastSentValue&&c!=0x29)return; int n=r?2:1; for(int i=0;i<n;i++){LampSerial.write(c);if(n>1)delay(15);} lastSentValue=c; lastSendTime=millis(); }
-void updateLCD() { lcd.setCursor(0, 0); if (currentPage == 0) { switch(currentTarget) { case ITEM_BRIGHTNESS: lcd.print("Set: Brightness "); break; case ITEM_SPECTRUM: lcd.print("Set: Spectrum   "); break; case ITEM_MIST: lcd.print("Set: Humidifier "); break; case ITEM_FAN_IN: lcd.print("Set: Fan IN     "); break; case ITEM_FAN_OUT: lcd.print("Set: Fan OUT    "); break; case ITEM_PUMP: lcd.print("Set: Pump       "); break; case ITEM_RESERVED: lcd.print("Set: Aux        "); break; } lcd.setCursor(0, 1); lcd.print(isEditing ? "* " : "> "); lcd.print("Val: "); switch(currentTarget) { case ITEM_BRIGHTNESS: lcd.print(currentBrightIdx + 1); lcd.print("/18   "); break; case ITEM_SPECTRUM: lcd.print(currentSpectrum); lcd.print("/21   "); break; case ITEM_MIST: lcd.print(devs[1].state ? "ON " : "OFF"); break; case ITEM_FAN_IN: lcd.print(devs[2].state ? "ON " : "OFF"); break; case ITEM_FAN_OUT: lcd.print(devs[3].state ? "ON " : "OFF"); break; case ITEM_PUMP: lcd.print(devs[4].state ? "ON " : "OFF"); break; case ITEM_RESERVED: lcd.print(devs[5].state ? "ON " : "OFF"); break; } } else if (currentPage == 1) { lcd.print("AirT:"); lcd.print(air_t,0); lcd.print(" H:"); lcd.print(air_h,0); lcd.print("%  "); lcd.setCursor(0, 1); lcd.print("CO2:"); lcd.print(co2); lcd.print(" L:"); lcd.print(lux); } else if (currentPage == 2) { lcd.print("S_T:"); lcd.print(soil_t, 1); lcd.print(" H:"); lcd.print(soil_h, 0); lcd.print("%"); lcd.setCursor(0, 1); lcd.print("PH:"); lcd.print(soil_ph, 1); lcd.print(" EC:"); lcd.print(soil_ec); } }
-void handlePageButtons() { if(millis() - lastPageBtnTime < 300) return; bool c=false; if(digitalRead(BTN_PAGE_NEXT)==0){currentPage=(currentPage+1)%3;c=true;} if(digitalRead(BTN_PAGE_PREV)==1){currentPage=(currentPage-1+3)%3;c=true;} if(c){lastPageBtnTime=millis();isEditing=false;lcd.clear();updateLCD();} }
-void handleEncoder() { static int lastA = LOW; int curA = digitalRead(ENCODER_A); if (curA != lastA && curA == LOW && (millis() - lastEncoderTime > 20)) { lastEncoderTime = millis(); int delta = (digitalRead(ENCODER_B) != curA) ? -1 : 1; if (!isEditing) { int nextItem = (int)currentTarget + delta; if (nextItem < 0) nextItem = 6; if (nextItem > 6) nextItem = 0; currentTarget = (TargetItem)nextItem; } else { bool changed = true; switch(currentTarget) { case ITEM_BRIGHTNESS: currentBrightIdx = constrain(currentBrightIdx + delta, 0, MAX_BRIGHT_IDX); sendLampByte(BRIGHT_CODES[currentBrightIdx], true); break; case ITEM_SPECTRUM: currentSpectrum = constrain(currentSpectrum + delta, 1, 21); sendLampByte((uint8_t)currentSpectrum, true); break; case ITEM_MIST: updateDeviceState(1, delta > 0); break; case ITEM_FAN_IN: updateDeviceState(2, delta > 0); break; case ITEM_FAN_OUT: updateDeviceState(3, delta > 0); break; case ITEM_PUMP: updateDeviceState(4, delta > 0); break; case ITEM_RESERVED:updateDeviceState(5, delta > 0); break; default: changed = false; break; } if(changed) needToPublish = true; } updateLCD(); } lastA = curA; }
-void handleEncoderButton() { bool btnState = (digitalRead(ENCODER_SW) == LOW); if (btnState && !isEncoderBtnPressed) { encoderBtnTimer = millis(); isEncoderBtnPressed = true; } else if (!btnState && isEncoderBtnPressed) { if (millis() - encoderBtnTimer > 50) { if (millis() - encoderBtnTimer >= 800) { sendLampByte(0x29, false); } else { isEditing = !isEditing; lastSentValue = -1; } updateLCD(); } isEncoderBtnPressed = false; } }
+    } catch(e) {}
+  });
+};
+</script>
+</body>
+</html>
