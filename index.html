@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.20 (Chart)</title>
+<title>PlantLight Pro v10.22 (Dual Charts)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -96,7 +96,9 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 .btn-cyc { font-size: 12px; padding: 3px 8px; background: #ffedd5; color: var(--orange); border-radius: 6px; }
 
 /* Chart Container */
-.chart-box { position: relative; height: 200px; width: 100%; }
+.chart-box { position: relative; height: 220px; width: 100%; }
+.chart-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.chart-btn { font-size:11px; padding:4px 8px; background:#f3f4f6; color:#666; border:none; border-radius:4px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -126,13 +128,20 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
     <button id="modeManual" class="mode-btn" onclick="setSysMode(0)">🖐 手動模式 (Manual)</button>
   </div>
   
-  <div class="card" style="margin-bottom:16px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <h2>📈 即時環境趨勢 (Live Chart)</h2>
-      <button onclick="clearChart()" style="font-size:11px; padding:4px 8px; background:#f3f4f6; color:#666;">清除重繪</button>
+  <div class="grid-layout" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="chart-header">
+        <h2>☁️ 空氣環境趨勢 (Air)</h2>
+        <button class="chart-btn" onclick="clearCharts()">清除</button>
+      </div>
+      <div class="chart-box"><canvas id="chartAir"></canvas></div>
     </div>
-    <div class="chart-box">
-      <canvas id="envChart"></canvas>
+    <div class="card">
+      <div class="chart-header">
+        <h2>🌱 土壤環境趨勢 (Soil)</h2>
+        <button class="chart-btn" onclick="clearCharts()">清除</button>
+      </div>
+      <div class="chart-box"><canvas id="chartSoil"></canvas></div>
     </div>
   </div>
 
@@ -235,47 +244,69 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 let client = null;
 const $ = (id) => document.getElementById(id);
 
-// --- 圖表初始化 ---
-let envChart = null;
-function initChart() {
-  const ctx = document.getElementById('envChart').getContext('2d');
-  envChart = new Chart(ctx, {
+// --- 雙圖表初始化 ---
+let chartAir = null, chartSoil = null;
+const commonOptions = {
+  responsive: true, maintainAspectRatio: false, animation: false,
+  interaction: { mode: 'index', intersect: false },
+  plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+  scales: { x: { display: false } }
+};
+
+function initCharts() {
+  // 1. 空氣圖表 (單座標軸)
+  chartAir = new Chart($('chartAir').getContext('2d'), {
     type: 'line',
     data: {
       labels: [],
       datasets: [
-        { label: '氣溫(°C)', data: [], borderColor: '#ef4444', tension: 0.4, borderWidth: 2, pointRadius: 0 },
-        { label: '濕度(%)', data: [], borderColor: '#3b82f6', tension: 0.4, borderWidth: 2, pointRadius: 0 },
-        { label: '土濕(%)', data: [], borderColor: '#22c55e', tension: 0.4, borderWidth: 2, pointRadius: 0 }
+        { label: '氣溫(°C)', data: [], borderColor: '#ef4444', tension:0.4, borderWidth:2, pointRadius:0 },
+        { label: '濕度(%)', data: [], borderColor: '#3b82f6', tension:0.4, borderWidth:2, pointRadius:0 }
       ]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11 } } } },
+    options: { ...commonOptions, scales: { x:{display:false}, y:{suggestedMin:0, suggestedMax:100} } }
+  });
+
+  // 2. 土壤圖表 (雙座標軸)
+  chartSoil = new Chart($('chartSoil').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        { label: '土溫(°C)', data: [], borderColor: '#f97316', tension:0.4, borderWidth:2, pointRadius:0, yAxisID: 'y1' },
+        { label: '土濕(%)', data: [], borderColor: '#22c55e', tension:0.4, borderWidth:2, pointRadius:0, yAxisID: 'y1' },
+        { label: 'pH', data: [], borderColor: '#8b5cf6', tension:0.4, borderWidth:2, pointRadius:0, yAxisID: 'y1' },
+        { label: 'EC(us)', data: [], borderColor: '#eab308', tension:0.4, borderWidth:2, pointRadius:0, yAxisID: 'y2' } // EC 用右邊座標
+      ]
+    },
+    options: { 
+      ...commonOptions, 
       scales: {
-        x: { display: false }, // 隱藏 X 軸標籤避免擁擠
-        y: { suggestedMin: 0, suggestedMax: 100 }
+        x: { display: false },
+        y1: { type: 'linear', position: 'left', suggestedMin:0, suggestedMax:100, title:{display:true, text:'溫度/濕度/pH'} },
+        y2: { type: 'linear', position: 'right', suggestedMin:0, suggestedMax:2000, title:{display:true, text:'電導 EC'}, grid:{drawOnChartArea:false} }
       }
     }
   });
 }
-function updateChart(t, h, sh) {
-  if(!envChart) return;
-  const now = new Date().toLocaleTimeString('en-US', {hour12:false, hour:"numeric", minute:"numeric", second:"numeric"});
-  if(envChart.data.labels.length > 30) { // 保留 30 筆數據
-    envChart.data.labels.shift();
-    envChart.data.datasets.forEach((dataset) => dataset.data.shift());
-  }
-  envChart.data.labels.push(now);
-  envChart.data.datasets[0].data.push(t);
-  envChart.data.datasets[1].data.push(h);
-  envChart.data.datasets[2].data.push(sh);
-  envChart.update();
+
+function updateCharts(d) {
+  if(d.t===undefined || d.s_h===undefined) return;
+  const now = new Date().toLocaleTimeString('en-US',{hour12:false,hour:"numeric",minute:"numeric",second:"numeric"});
+  
+  addData(chartAir, now, [d.t, d.h]);
+  addData(chartSoil, now, [d.s_t, d.s_h, d.s_ph, d.s_ec]);
 }
-function clearChart(){ if(envChart){ envChart.data.labels=[]; envChart.data.datasets.forEach(d=>d.data=[]); envChart.update(); } }
+
+function addData(chart, label, dataArray) {
+  if(chart.data.labels.length > 30) { 
+    chart.data.labels.shift(); chart.data.datasets.forEach(ds=>ds.data.shift());
+  }
+  chart.data.labels.push(label);
+  chart.data.datasets.forEach((ds, i) => ds.data.push(dataArray[i]));
+  chart.update();
+}
+function clearCharts(){ [chartAir, chartSoil].forEach(c=>{ if(c){ c.data.labels=[]; c.data.datasets.forEach(d=>d.data=[]); c.update(); }}); }
 // -----------------
 
 if(localStorage.getItem("plantDate")) { $("plantDate").value = localStorage.getItem("plantDate"); calcDays(); }
@@ -317,8 +348,8 @@ devices.forEach(d => {
   devContainer.insertAdjacentHTML('beforeend', html);
 });
 
-// 頁面載入時初始化圖表
-initChart();
+// 初始化圖表
+initCharts();
 
 function pub(op, val, target=null, extra={}){
   if(!client || !client.connected) { alert("請先連線！"); return; }
@@ -389,30 +420,25 @@ $("btnConn").onclick = () => {
       if(d.time) $("time").innerText = d.time;
       if(d.sys_mode !== undefined) updateModeUI(d.sys_mode);
       
-      // 更新數值並繪圖
+      // 更新數值
       update("t", d.t); update("h", d.h);
       update("co2", d.co2); update("lux", d.lux_rel);
       update("s_h", d.s_h); update("s_t", d.s_t);
       update("s_ph", d.s_ph); update("s_ec", d.s_ec);
       
-      // ★ 新增：如果有收到溫濕度，就更新圖表
-      if (d.t !== undefined && d.h !== undefined && d.s_h !== undefined) {
-         updateChart(d.t, d.h, d.s_h);
-      }
+      // ★ 更新雙圖表
+      updateCharts(d);
       
       if(d.bri_pct) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
       if(d.spec) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
       if(d.sch_en !== undefined) $("sch_en").checked = (d.sch_en == 1);
-      
       if(d.sch_on && document.activeElement.id !== "sch_on") $("sch_on").value = d.sch_on;
       if(d.sch_off && document.activeElement.id !== "sch_off") $("sch_off").value = d.sch_off;
-
       if(d.cfg_co2 !== undefined && document.activeElement.id !== "cfg_co2") $("cfg_co2").value = d.cfg_co2;
       if(d.cfg_soil !== undefined && document.activeElement.id !== "cfg_soil") $("cfg_soil").value = d.cfg_soil;
       if(d.cfg_time !== undefined && document.activeElement.id !== "cfg_time") $("cfg_time").value = d.cfg_time;
       if(d.cfg_air_low !== undefined && document.activeElement.id !== "cfg_air_low") $("cfg_air_low").value = d.cfg_air_low;
       if(d.cfg_air_high !== undefined && document.activeElement.id !== "cfg_air_high") $("cfg_air_high").value = d.cfg_air_high;
-
       if(d.cfg_w_h !== undefined && document.activeElement.id !== "cfg_w_h") $("cfg_w_h").value = d.cfg_w_h;
       if(d.cfg_w_t !== undefined && document.activeElement.id !== "cfg_w_t") $("cfg_w_t").value = d.cfg_w_t;
       if(d.cfg_f_t !== undefined && document.activeElement.id !== "cfg_f_t") $("cfg_f_t").value = d.cfg_f_t;
