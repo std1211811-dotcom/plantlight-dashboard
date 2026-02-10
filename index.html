@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.15</title>
+<title>PlantLight Pro v10.20 (Chart)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 :root {
@@ -93,6 +94,9 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 #debug { display: none; background: #111; color: #0f0; padding: 12px; margin-top: 20px; border-radius: 8px; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
 .btn-sm { font-size: 12px; padding: 3px 8px; background: #eff6ff; color: var(--primary); border-radius: 6px; }
 .btn-cyc { font-size: 12px; padding: 3px 8px; background: #ffedd5; color: var(--orange); border-radius: 6px; }
+
+/* Chart Container */
+.chart-box { position: relative; height: 200px; width: 100%; }
 </style>
 </head>
 <body>
@@ -120,6 +124,16 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
   <div class="mode-switch">
     <button id="modeAuto" class="mode-btn active" onclick="setSysMode(1)">🤖 自動模式 (Auto)</button>
     <button id="modeManual" class="mode-btn" onclick="setSysMode(0)">🖐 手動模式 (Manual)</button>
+  </div>
+  
+  <div class="card" style="margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <h2>📈 即時環境趨勢 (Live Chart)</h2>
+      <button onclick="clearChart()" style="font-size:11px; padding:4px 8px; background:#f3f4f6; color:#666;">清除重繪</button>
+    </div>
+    <div class="chart-box">
+      <canvas id="envChart"></canvas>
+    </div>
   </div>
 
   <div class="grid-layout">
@@ -155,12 +169,10 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
     
     <div class="card" id="cardCfg">
       <h2>🛡️ 參數設定 (Auto 模式)</h2>
-      
       <div class="cfg-row" style="background:#eff6ff; padding:8px; border-radius:8px; margin-bottom:12px;">
         <span style="flex:1; font-weight:700; color:#1e40af">🌱 開始種植日期</span>
         <input type="date" id="plantDate" onchange="saveDate()" style="width:120px;">
       </div>
-
       <div class="cfg-row"><span style="flex:1">CO2 低於 (ppm)</span><input type="number" id="cfg_co2" placeholder="500"></div>
       <div class="cfg-row"><span style="flex:1">土壤濕度 低於 (%)</span><input type="number" id="cfg_soil" placeholder="40"></div>
       <div class="cfg-row"><span style="flex:1">空氣濕度 低於 (%) <small>(開霧)</small></span><input type="number" id="cfg_air_low" placeholder="50"></div>
@@ -173,7 +185,6 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
       <div class="cfg-row"><span style="flex:1">週三施肥時長 (秒)</span><input type="number" id="cfg_f_t" placeholder="60"></div>
 
       <div class="cfg-row"><span style="flex:1">自動保護執行 (秒)</span><input type="number" id="cfg_time" placeholder="300"></div>
-      
       <button onclick="setCfg()" style="width:100%;margin-top:8px;padding:8px;background:var(--purple);color:#fff;border-radius:8px;border:none;cursor:pointer">儲存全部設定</button>
       <button onclick="pub('upload',1)" style="width:100%;margin-top:16px;padding:12px;background:#8b5cf6;color:#fff;border-radius:8px;border:none;cursor:pointer;font-weight:bold;box-shadow:0 4px 6px rgba(139, 92, 246, 0.25)">☁️ 手動上傳至 Google Sheets</button>
     </div>
@@ -224,7 +235,49 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 let client = null;
 const $ = (id) => document.getElementById(id);
 
-// 讀取日期
+// --- 圖表初始化 ---
+let envChart = null;
+function initChart() {
+  const ctx = document.getElementById('envChart').getContext('2d');
+  envChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        { label: '氣溫(°C)', data: [], borderColor: '#ef4444', tension: 0.4, borderWidth: 2, pointRadius: 0 },
+        { label: '濕度(%)', data: [], borderColor: '#3b82f6', tension: 0.4, borderWidth: 2, pointRadius: 0 },
+        { label: '土濕(%)', data: [], borderColor: '#22c55e', tension: 0.4, borderWidth: 2, pointRadius: 0 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11 } } } },
+      scales: {
+        x: { display: false }, // 隱藏 X 軸標籤避免擁擠
+        y: { suggestedMin: 0, suggestedMax: 100 }
+      }
+    }
+  });
+}
+function updateChart(t, h, sh) {
+  if(!envChart) return;
+  const now = new Date().toLocaleTimeString('en-US', {hour12:false, hour:"numeric", minute:"numeric", second:"numeric"});
+  if(envChart.data.labels.length > 30) { // 保留 30 筆數據
+    envChart.data.labels.shift();
+    envChart.data.datasets.forEach((dataset) => dataset.data.shift());
+  }
+  envChart.data.labels.push(now);
+  envChart.data.datasets[0].data.push(t);
+  envChart.data.datasets[1].data.push(h);
+  envChart.data.datasets[2].data.push(sh);
+  envChart.update();
+}
+function clearChart(){ if(envChart){ envChart.data.labels=[]; envChart.data.datasets.forEach(d=>d.data=[]); envChart.update(); } }
+// -----------------
+
 if(localStorage.getItem("plantDate")) { $("plantDate").value = localStorage.getItem("plantDate"); calcDays(); }
 function saveDate() { localStorage.setItem("plantDate", $("plantDate").value); calcDays(); }
 function calcDays() { const s=new Date($("plantDate").value); const n=new Date(); if(!isNaN(s.getTime())){ const d=Math.ceil(Math.abs(n-s)/(86400000)); $("dayBadge").innerText="🌱 Day "+d; $("dayBadge").classList.add("day"); } }
@@ -264,6 +317,9 @@ devices.forEach(d => {
   devContainer.insertAdjacentHTML('beforeend', html);
 });
 
+// 頁面載入時初始化圖表
+initChart();
+
 function pub(op, val, target=null, extra={}){
   if(!client || !client.connected) { alert("請先連線！"); return; }
   const payload = { key: $("key").value.trim(), op: op, v: val, ...extra };
@@ -286,14 +342,12 @@ function setCfg() {
   const t = parseInt($("cfg_time").value);
   const al = parseInt($("cfg_air_low").value);
   const ah = parseInt($("cfg_air_high").value);
-  // ★ 新增參數
   const wh = parseInt($("cfg_w_h").value);
   const wt = parseInt($("cfg_w_t").value);
   const ft = parseInt($("cfg_f_t").value);
 
   if(isNaN(c)||isNaN(s)||isNaN(t)||isNaN(al)||isNaN(ah)||isNaN(wh)||isNaN(wt)||isNaN(ft)) { alert("請輸入完整數值"); return; }
   
-  // 發送所有設定
   pub("set_cfg", 0, null, { 
     co2_th: c, soil_th: s, run_t: t, air_low: al, air_high: ah,
     w_h: wh, w_t: wt, f_t: ft 
@@ -335,10 +389,16 @@ $("btnConn").onclick = () => {
       if(d.time) $("time").innerText = d.time;
       if(d.sys_mode !== undefined) updateModeUI(d.sys_mode);
       
+      // 更新數值並繪圖
       update("t", d.t); update("h", d.h);
       update("co2", d.co2); update("lux", d.lux_rel);
       update("s_h", d.s_h); update("s_t", d.s_t);
       update("s_ph", d.s_ph); update("s_ec", d.s_ec);
+      
+      // ★ 新增：如果有收到溫濕度，就更新圖表
+      if (d.t !== undefined && d.h !== undefined && d.s_h !== undefined) {
+         updateChart(d.t, d.h, d.s_h);
+      }
       
       if(d.bri_pct) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
       if(d.spec) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
@@ -353,7 +413,6 @@ $("btnConn").onclick = () => {
       if(d.cfg_air_low !== undefined && document.activeElement.id !== "cfg_air_low") $("cfg_air_low").value = d.cfg_air_low;
       if(d.cfg_air_high !== undefined && document.activeElement.id !== "cfg_air_high") $("cfg_air_high").value = d.cfg_air_high;
 
-      // ★ 新增：接收並更新網頁上的澆灌參數
       if(d.cfg_w_h !== undefined && document.activeElement.id !== "cfg_w_h") $("cfg_w_h").value = d.cfg_w_h;
       if(d.cfg_w_t !== undefined && document.activeElement.id !== "cfg_w_t") $("cfg_w_t").value = d.cfg_w_t;
       if(d.cfg_f_t !== undefined && document.activeElement.id !== "cfg_f_t") $("cfg_f_t").value = d.cfg_f_t;
