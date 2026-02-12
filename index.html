@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.29 (History)</title>
+<title>PlantLight Pro v10.30 (CO2 Chart)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -118,7 +118,6 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 
   <div class="conn-box">
     <input type="text" id="g_url" value="https://script.google.com/macros/s/AKfycbzPzAvbwsBEYB0M02eNAI7X3_L-kTDvJcBmgTZ30GP5lZ0NIeLPKE12XITREuQvIr2W/exec" placeholder="Google Script URL" style="margin-bottom:8px;font-size:12px;color:#666">
-    
     <input type="text" id="base" value="4125252" placeholder="Topic ID (e.g. 4125252)">
     <div class="input-row">
       <input type="password" id="key" value="9527" placeholder="Key" style="flex:1">
@@ -141,7 +140,7 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
   <div class="grid-layout" style="margin-bottom:16px;">
     <div class="card">
       <div class="chart-header">
-        <h2>☁️ 空氣環境 (Air)</h2>
+        <h2>☁️ 空氣環境 (Air + CO2)</h2>
         <button class="chart-btn" onclick="loadHistory()">🔄 重新載入歷史</button>
       </div>
       <div class="chart-box"><canvas id="chartAir"></canvas></div>
@@ -254,9 +253,8 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 let client = null;
 const $ = (id) => document.getElementById(id);
 
-// --- 圖表邏輯 ---
 let chartAir = null, chartSoil = null;
-let maxDataPoints = 600; // 預設 5H
+let maxDataPoints = 600; 
 
 const TIME_RANGES = { 1: 120, 2: 240, 5: 600, 24: 2880 };
 
@@ -276,11 +274,24 @@ const commonOptions = {
 };
 
 function initCharts() {
+  // ★★★ 更新：空氣圖表加入 CO2 雙座標軸 ★★★
   chartAir = new Chart($('chartAir').getContext('2d'), {
     type: 'line',
-    data: { labels: [], datasets: [ { label: '氣溫(°C)', data: [], borderColor: '#ef4444', borderWidth:1.5 }, { label: '濕度(%)', data: [], borderColor: '#3b82f6', borderWidth:1.5 } ] },
-    options: { ...commonOptions, scales: { x:{display:false}, y:{suggestedMin:0, suggestedMax:100} } }
+    data: { labels: [], datasets: [ 
+      { label: '氣溫(°C)', data: [], borderColor: '#ef4444', borderWidth:1.5, yAxisID: 'y1' }, 
+      { label: '濕度(%)', data: [], borderColor: '#3b82f6', borderWidth:1.5, yAxisID: 'y1' },
+      { label: 'CO2(ppm)', data: [], borderColor: '#9ca3af', borderWidth:1.5, borderDash:[5,5], yAxisID: 'y2' } 
+    ]},
+    options: { 
+      ...commonOptions, 
+      scales: { 
+        x:{display:false}, 
+        y1:{ type: 'linear', position: 'left', suggestedMin:0, suggestedMax:100 },
+        y2:{ type: 'linear', position: 'right', suggestedMin:0, suggestedMax:2000, grid:{drawOnChartArea:false} }
+      } 
+    }
   });
+
   chartSoil = new Chart($('chartSoil').getContext('2d'), {
     type: 'line',
     data: { labels: [], datasets: [ 
@@ -296,7 +307,7 @@ function initCharts() {
 function updateCharts(d) {
   if(d.t===undefined || d.s_h===undefined) return;
   const now = new Date().toLocaleTimeString('en-US',{hour12:false,hour:"numeric",minute:"numeric",second:"numeric"});
-  addData(chartAir, now, [d.t, d.h]);
+  addData(chartAir, now, [d.t, d.h, d.co2]); // 加入 CO2
   addData(chartSoil, now, [d.s_t, d.s_h, d.s_ph, d.s_ec]);
 }
 
@@ -309,35 +320,20 @@ function addData(chart, label, dataArray) {
   chart.update();
 }
 
-// ★★★ 抓取 Google Sheets 歷史資料 ★★★
 function loadHistory() {
   const url = $("g_url").value;
   if(!url) return;
-  // 顯示載入中
   document.querySelectorAll('.chart-header button').forEach(b => b.innerText = "載入中...");
-  
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      // 清空舊圖表
-      [chartAir, chartSoil].forEach(c => { c.data.labels = []; c.data.datasets.forEach(d => d.data = []); });
-      
-      // 填入歷史資料
-      data.forEach(row => {
-        const time = row.time; // 時間字串
-        addData(chartAir, time, [row.t, row.h]);
-        addData(chartSoil, time, [row.s_t, row.s_h, row.s_ph, row.s_ec]);
-      });
-      document.querySelectorAll('.chart-header button').forEach(b => b.innerText = "🔄 重新載入歷史");
-    })
-    .catch(err => {
-      console.error(err);
-      alert("讀取歷史失敗，請確認 Google Script 已更新並部署！");
-      document.querySelectorAll('.chart-header button').forEach(b => b.innerText = "🔄 重新載入歷史");
+  fetch(url).then(res => res.json()).then(data => {
+    [chartAir, chartSoil].forEach(c => { c.data.labels = []; c.data.datasets.forEach(d => d.data = []); });
+    data.forEach(row => {
+      const time = row.time; 
+      addData(chartAir, time, [row.t, row.h, row.co2]); // 加入歷史 CO2
+      addData(chartSoil, time, [row.s_t, row.s_h, row.s_ph, row.s_ec]);
     });
+    document.querySelectorAll('.chart-header button').forEach(b => b.innerText = "🔄 重新載入歷史");
+  }).catch(err => { alert("讀取失敗"); });
 }
-
-// -----------------
 
 if(localStorage.getItem("plantDate")) { $("plantDate").value = localStorage.getItem("plantDate"); calcDays(); }
 function saveDate() { localStorage.setItem("plantDate", $("plantDate").value); calcDays(); }
@@ -378,7 +374,6 @@ devices.forEach(d => {
   devContainer.insertAdjacentHTML('beforeend', html);
 });
 
-// 初始化圖表
 initCharts();
 setTimeRange(5); 
 
@@ -443,27 +438,20 @@ $("btnConn").onclick = () => {
   client.on("connect", () => { 
     btn.innerText = "斷線"; badge.innerText = "已連線"; badge.className = "badge ok"; 
     client.subscribe($("base").value.trim() + "/state"); 
-    
-    // ★ 連線成功後，順便去抓歷史資料
     loadHistory();
   });
   client.on("message", (topic, msg) => {
     try {
       const d = JSON.parse(msg.toString());
       $("debug").innerText = JSON.stringify(d, null, 2);
-      
       const update = (id, val) => { if (val !== undefined && $(id)) $(id).innerText = val; };
-
       if(d.time) $("time").innerText = d.time;
       if(d.sys_mode !== undefined) updateModeUI(d.sys_mode);
-      
       update("t", d.t); update("h", d.h);
       update("co2", d.co2); update("lux", d.lux_rel);
       update("s_h", d.s_h); update("s_t", d.s_t);
       update("s_ph", d.s_ph); update("s_ec", d.s_ec);
-      
       updateCharts(d);
-      
       if(d.bri_pct) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
       if(d.spec) { $("spec").value = d.spec; $("specVal").innerText = d.spec; }
       if(d.sch_en !== undefined) $("sch_en").checked = (d.sch_en == 1);
