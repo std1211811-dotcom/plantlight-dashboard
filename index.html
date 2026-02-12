@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.22 (Dual Charts)</title>
+<title>PlantLight Pro v10.27 (TimeRange)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -97,8 +97,10 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 
 /* Chart Container */
 .chart-box { position: relative; height: 220px; width: 100%; }
-.chart-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-.chart-btn { font-size:11px; padding:4px 8px; background:#f3f4f6; color:#666; border:none; border-radius:4px; cursor:pointer; }
+.chart-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:5px; }
+.chart-controls { display:flex; gap:3px; flex-wrap:wrap; }
+.chart-btn { font-size:10px; padding:3px 6px; background:#f3f4f6; color:#666; border:1px solid #ddd; border-radius:4px; cursor:pointer; }
+.chart-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
 </style>
 </head>
 <body>
@@ -128,18 +130,28 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
     <button id="modeManual" class="mode-btn" onclick="setSysMode(0)">🖐 手動模式 (Manual)</button>
   </div>
   
+  <div style="margin-bottom:10px; display:flex; justify-content:center; gap:5px; flex-wrap:wrap;">
+    <button class="chart-btn" onclick="setTimeRange(1)" id="btn1h">1H</button>
+    <button class="chart-btn" onclick="setTimeRange(2)" id="btn2h">2H</button>
+    <button class="chart-btn active" onclick="setTimeRange(5)" id="btn5h">5H</button>
+    <button class="chart-btn" onclick="setTimeRange(8)" id="btn8h">8H</button>
+    <button class="chart-btn" onclick="setTimeRange(12)" id="btn12h">12H</button>
+    <button class="chart-btn" onclick="setTimeRange(24)" id="btn24h">24H</button>
+    <button class="chart-btn" onclick="setTimeRange(168)" id="btn1w">1週</button>
+  </div>
+
   <div class="grid-layout" style="margin-bottom:16px;">
     <div class="card">
       <div class="chart-header">
         <h2>☁️ 空氣環境趨勢 (Air)</h2>
-        <button class="chart-btn" onclick="clearCharts()">清除</button>
+        <button class="chart-btn" onclick="clearCharts()">Reset</button>
       </div>
       <div class="chart-box"><canvas id="chartAir"></canvas></div>
     </div>
     <div class="card">
       <div class="chart-header">
         <h2>🌱 土壤環境趨勢 (Soil)</h2>
-        <button class="chart-btn" onclick="clearCharts()">清除</button>
+        <button class="chart-btn" onclick="clearCharts()">Reset</button>
       </div>
       <div class="chart-box"><canvas id="chartSoil"></canvas></div>
     </div>
@@ -244,62 +256,71 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 let client = null;
 const $ = (id) => document.getElementById(id);
 
-// --- 雙圖表初始化 ---
+// --- 雙圖表與時間範圍控制 ---
 let chartAir = null, chartSoil = null;
+let maxDataPoints = 300; // 預設 5H (5 * 60 = 300 筆，假設每分鐘更新)
+// 實際上 ESP32 約 3 秒傳一次，所以 1H = 1200 筆
+// 為了避免瀏覽器當機，我們設定一個合理的上限
+// 1H (1200), 24H (28800) -> 太多了，我們動態調整
+
+// 定義時間範圍對應的資料點數量上限 (假設 3秒一筆)
+const TIME_RANGES = {
+  1: 1200,   // 1H
+  2: 2400,   // 2H
+  5: 6000,   // 5H
+  8: 9600,   // 8H
+  12: 14400, // 12H
+  24: 28800, // 24H
+  168: 201600 // 1W (這可能會讓舊手機卡頓，請小心使用)
+};
+
+function setTimeRange(h) {
+  maxDataPoints = TIME_RANGES[h] || 6000;
+  // 更新按鈕樣式
+  document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('btn' + (h===168?'1w':h+'h'));
+  if(btn) btn.classList.add('active');
+  
+  // 清除舊資料以符合新比例 (選用，不清除也可以)
+  // clearCharts(); 
+}
+
 const commonOptions = {
   responsive: true, maintainAspectRatio: false, animation: false,
   interaction: { mode: 'index', intersect: false },
   plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
-  scales: { x: { display: false } }
+  scales: { x: { display: false } },
+  elements: { point: { radius: 0 } } // 隱藏點，提升效能
 };
 
 function initCharts() {
-  // 1. 空氣圖表 (單座標軸)
   chartAir = new Chart($('chartAir').getContext('2d'), {
     type: 'line',
-    data: {
-      labels: [],
-      datasets: [
-        { label: '氣溫(°C)', data: [], borderColor: '#ef4444', tension:0.4, borderWidth:2, pointRadius:0 },
-        { label: '濕度(%)', data: [], borderColor: '#3b82f6', tension:0.4, borderWidth:2, pointRadius:0 }
-      ]
-    },
+    data: { labels: [], datasets: [ { label: '氣溫(°C)', data: [], borderColor: '#ef4444', borderWidth:1.5 }, { label: '濕度(%)', data: [], borderColor: '#3b82f6', borderWidth:1.5 } ] },
     options: { ...commonOptions, scales: { x:{display:false}, y:{suggestedMin:0, suggestedMax:100} } }
   });
-
-  // 2. 土壤圖表 (雙座標軸)
   chartSoil = new Chart($('chartSoil').getContext('2d'), {
     type: 'line',
-    data: {
-      labels: [],
-      datasets: [
-        { label: '土溫(°C)', data: [], borderColor: '#f97316', tension:0.4, borderWidth:2, pointRadius:0, yAxisID: 'y1' },
-        { label: '土濕(%)', data: [], borderColor: '#22c55e', tension:0.4, borderWidth:2, pointRadius:0, yAxisID: 'y1' },
-        { label: 'pH', data: [], borderColor: '#8b5cf6', tension:0.4, borderWidth:2, pointRadius:0, yAxisID: 'y1' },
-        { label: 'EC(us)', data: [], borderColor: '#eab308', tension:0.4, borderWidth:2, pointRadius:0, yAxisID: 'y2' } // EC 用右邊座標
-      ]
-    },
-    options: { 
-      ...commonOptions, 
-      scales: {
-        x: { display: false },
-        y1: { type: 'linear', position: 'left', suggestedMin:0, suggestedMax:100, title:{display:true, text:'溫度/濕度/pH'} },
-        y2: { type: 'linear', position: 'right', suggestedMin:0, suggestedMax:2000, title:{display:true, text:'電導 EC'}, grid:{drawOnChartArea:false} }
-      }
-    }
+    data: { labels: [], datasets: [ 
+      { label: '土溫(°C)', data: [], borderColor: '#f97316', borderWidth:1.5, yAxisID: 'y1' }, 
+      { label: '土濕(%)', data: [], borderColor: '#22c55e', borderWidth:1.5, yAxisID: 'y1' },
+      { label: 'pH', data: [], borderColor: '#8b5cf6', borderWidth:1.5, yAxisID: 'y1' },
+      { label: 'EC(us)', data: [], borderColor: '#eab308', borderWidth:1.5, yAxisID: 'y2' } 
+    ]},
+    options: { ...commonOptions, scales: { x: { display: false }, y1: { type: 'linear', position: 'left', suggestedMin:0, suggestedMax:100 }, y2: { type: 'linear', position: 'right', suggestedMin:0, suggestedMax:2000, grid:{drawOnChartArea:false} } } }
   });
 }
 
 function updateCharts(d) {
   if(d.t===undefined || d.s_h===undefined) return;
   const now = new Date().toLocaleTimeString('en-US',{hour12:false,hour:"numeric",minute:"numeric",second:"numeric"});
-  
   addData(chartAir, now, [d.t, d.h]);
   addData(chartSoil, now, [d.s_t, d.s_h, d.s_ph, d.s_ec]);
 }
 
 function addData(chart, label, dataArray) {
-  if(chart.data.labels.length > 30) { 
+  // 依照設定的時間範圍限制資料筆數
+  if(chart.data.labels.length > maxDataPoints) { 
     chart.data.labels.shift(); chart.data.datasets.forEach(ds=>ds.data.shift());
   }
   chart.data.labels.push(label);
@@ -350,6 +371,7 @@ devices.forEach(d => {
 
 // 初始化圖表
 initCharts();
+setTimeRange(5); // 預設 5H
 
 function pub(op, val, target=null, extra={}){
   if(!client || !client.connected) { alert("請先連線！"); return; }
@@ -420,13 +442,11 @@ $("btnConn").onclick = () => {
       if(d.time) $("time").innerText = d.time;
       if(d.sys_mode !== undefined) updateModeUI(d.sys_mode);
       
-      // 更新數值
       update("t", d.t); update("h", d.h);
       update("co2", d.co2); update("lux", d.lux_rel);
       update("s_h", d.s_h); update("s_t", d.s_t);
       update("s_ph", d.s_ph); update("s_ec", d.s_ec);
       
-      // ★ 更新雙圖表
       updateCharts(d);
       
       if(d.bri_pct) { $("bri").value = d.bri_pct; $("briVal").innerText = d.bri_pct+"%"; }
