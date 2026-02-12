@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PlantLight Pro v10.27 (TimeRange)</title>
+<title>PlantLight Pro v10.29 (History)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -98,7 +98,6 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 /* Chart Container */
 .chart-box { position: relative; height: 220px; width: 100%; }
 .chart-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:5px; }
-.chart-controls { display:flex; gap:3px; flex-wrap:wrap; }
 .chart-btn { font-size:10px; padding:3px 6px; background:#f3f4f6; color:#666; border:1px solid #ddd; border-radius:4px; cursor:pointer; }
 .chart-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
 </style>
@@ -118,10 +117,12 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
   </header>
 
   <div class="conn-box">
+    <input type="text" id="g_url" value="https://script.google.com/macros/s/AKfycbzPzAvbwsBEYB0M02eNAI7X3_L-kTDvJcBmgTZ30GP5lZ0NIeLPKE12XITREuQvIr2W/exec" placeholder="Google Script URL" style="margin-bottom:8px;font-size:12px;color:#666">
+    
     <input type="text" id="base" value="4125252" placeholder="Topic ID (e.g. 4125252)">
     <div class="input-row">
       <input type="password" id="key" value="9527" placeholder="Key" style="flex:1">
-      <button class="btn-main" id="btnConn">連線</button>
+      <button class="btn-main" id="btnConn">連線 & 載入</button>
     </div>
   </div>
 
@@ -134,24 +135,21 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
     <button class="chart-btn" onclick="setTimeRange(1)" id="btn1h">1H</button>
     <button class="chart-btn" onclick="setTimeRange(2)" id="btn2h">2H</button>
     <button class="chart-btn active" onclick="setTimeRange(5)" id="btn5h">5H</button>
-    <button class="chart-btn" onclick="setTimeRange(8)" id="btn8h">8H</button>
-    <button class="chart-btn" onclick="setTimeRange(12)" id="btn12h">12H</button>
     <button class="chart-btn" onclick="setTimeRange(24)" id="btn24h">24H</button>
-    <button class="chart-btn" onclick="setTimeRange(168)" id="btn1w">1週</button>
   </div>
 
   <div class="grid-layout" style="margin-bottom:16px;">
     <div class="card">
       <div class="chart-header">
-        <h2>☁️ 空氣環境趨勢 (Air)</h2>
-        <button class="chart-btn" onclick="clearCharts()">Reset</button>
+        <h2>☁️ 空氣環境 (Air)</h2>
+        <button class="chart-btn" onclick="loadHistory()">🔄 重新載入歷史</button>
       </div>
       <div class="chart-box"><canvas id="chartAir"></canvas></div>
     </div>
     <div class="card">
       <div class="chart-header">
-        <h2>🌱 土壤環境趨勢 (Soil)</h2>
-        <button class="chart-btn" onclick="clearCharts()">Reset</button>
+        <h2>🌱 土壤環境 (Soil)</h2>
+        <button class="chart-btn" onclick="loadHistory()">🔄 重新載入歷史</button>
       </div>
       <div class="chart-box"><canvas id="chartSoil"></canvas></div>
     </div>
@@ -195,9 +193,9 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
         <input type="date" id="plantDate" onchange="saveDate()" style="width:120px;">
       </div>
       <div class="cfg-row"><span style="flex:1">CO2 低於 (ppm)</span><input type="number" id="cfg_co2" placeholder="500"></div>
-      <div class="cfg-row"><span style="flex:1">土壤濕度 低於 (%)</span><input type="number" id="cfg_soil" placeholder="40"></div>
-      <div class="cfg-row"><span style="flex:1">空氣濕度 低於 (%) <small>(開霧)</small></span><input type="number" id="cfg_air_low" placeholder="50"></div>
-      <div class="cfg-row"><span style="flex:1">空氣濕度 高於 (%) <small>(開扇)</small></span><input type="number" id="cfg_air_high" placeholder="70"></div>
+      <div class="cfg-row"><span style="flex:1">土壤濕度 低於 (%)</span><input type="number" id="cfg_soil" placeholder="60"></div>
+      <div class="cfg-row"><span style="flex:1">空氣濕度 低於 (%) <small>(開霧)</small></span><input type="number" id="cfg_air_low" placeholder="60"></div>
+      <div class="cfg-row"><span style="flex:1">空氣濕度 高於 (%) <small>(開扇)</small></span><input type="number" id="cfg_air_high" placeholder="80"></div>
       
       <hr style="border:0; border-top:1px dashed #ccc; margin:12px 0;">
       <h3 style="font-size:13px; color:#6b7280; margin-bottom:8px">🚿 澆灌排程 (每日一次)</h3>
@@ -256,33 +254,17 @@ input[type=time] { padding: 6px; font-size: 14px; background: #fff; }
 let client = null;
 const $ = (id) => document.getElementById(id);
 
-// --- 雙圖表與時間範圍控制 ---
+// --- 圖表邏輯 ---
 let chartAir = null, chartSoil = null;
-let maxDataPoints = 300; // 預設 5H (5 * 60 = 300 筆，假設每分鐘更新)
-// 實際上 ESP32 約 3 秒傳一次，所以 1H = 1200 筆
-// 為了避免瀏覽器當機，我們設定一個合理的上限
-// 1H (1200), 24H (28800) -> 太多了，我們動態調整
+let maxDataPoints = 600; // 預設 5H
 
-// 定義時間範圍對應的資料點數量上限 (假設 3秒一筆)
-const TIME_RANGES = {
-  1: 1200,   // 1H
-  2: 2400,   // 2H
-  5: 6000,   // 5H
-  8: 9600,   // 8H
-  12: 14400, // 12H
-  24: 28800, // 24H
-  168: 201600 // 1W (這可能會讓舊手機卡頓，請小心使用)
-};
+const TIME_RANGES = { 1: 120, 2: 240, 5: 600, 24: 2880 };
 
 function setTimeRange(h) {
-  maxDataPoints = TIME_RANGES[h] || 6000;
-  // 更新按鈕樣式
+  maxDataPoints = TIME_RANGES[h] || 600;
   document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('btn' + (h===168?'1w':h+'h'));
+  const btn = document.getElementById('btn' + h+'h');
   if(btn) btn.classList.add('active');
-  
-  // 清除舊資料以符合新比例 (選用，不清除也可以)
-  // clearCharts(); 
 }
 
 const commonOptions = {
@@ -290,7 +272,7 @@ const commonOptions = {
   interaction: { mode: 'index', intersect: false },
   plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
   scales: { x: { display: false } },
-  elements: { point: { radius: 0 } } // 隱藏點，提升效能
+  elements: { point: { radius: 0 } }
 };
 
 function initCharts() {
@@ -319,7 +301,6 @@ function updateCharts(d) {
 }
 
 function addData(chart, label, dataArray) {
-  // 依照設定的時間範圍限制資料筆數
   if(chart.data.labels.length > maxDataPoints) { 
     chart.data.labels.shift(); chart.data.datasets.forEach(ds=>ds.data.shift());
   }
@@ -327,7 +308,35 @@ function addData(chart, label, dataArray) {
   chart.data.datasets.forEach((ds, i) => ds.data.push(dataArray[i]));
   chart.update();
 }
-function clearCharts(){ [chartAir, chartSoil].forEach(c=>{ if(c){ c.data.labels=[]; c.data.datasets.forEach(d=>d.data=[]); c.update(); }}); }
+
+// ★★★ 抓取 Google Sheets 歷史資料 ★★★
+function loadHistory() {
+  const url = $("g_url").value;
+  if(!url) return;
+  // 顯示載入中
+  document.querySelectorAll('.chart-header button').forEach(b => b.innerText = "載入中...");
+  
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      // 清空舊圖表
+      [chartAir, chartSoil].forEach(c => { c.data.labels = []; c.data.datasets.forEach(d => d.data = []); });
+      
+      // 填入歷史資料
+      data.forEach(row => {
+        const time = row.time; // 時間字串
+        addData(chartAir, time, [row.t, row.h]);
+        addData(chartSoil, time, [row.s_t, row.s_h, row.s_ph, row.s_ec]);
+      });
+      document.querySelectorAll('.chart-header button').forEach(b => b.innerText = "🔄 重新載入歷史");
+    })
+    .catch(err => {
+      console.error(err);
+      alert("讀取歷史失敗，請確認 Google Script 已更新並部署！");
+      document.querySelectorAll('.chart-header button').forEach(b => b.innerText = "🔄 重新載入歷史");
+    });
+}
+
 // -----------------
 
 if(localStorage.getItem("plantDate")) { $("plantDate").value = localStorage.getItem("plantDate"); calcDays(); }
@@ -371,7 +380,7 @@ devices.forEach(d => {
 
 // 初始化圖表
 initCharts();
-setTimeRange(5); // 預設 5H
+setTimeRange(5); 
 
 function pub(op, val, target=null, extra={}){
   if(!client || !client.connected) { alert("請先連線！"); return; }
@@ -428,10 +437,16 @@ $("spec").oninput = (e) => $("specVal").innerText = e.target.value;
 
 $("btnConn").onclick = () => {
   const btn = $("btnConn"); const badge = $("status");
-  if(client){ client.end(); client = null; btn.innerText = "連線"; badge.innerText = "未連線"; badge.className = "badge"; return; }
+  if(client){ client.end(); client = null; btn.innerText = "連線 & 載入"; badge.innerText = "未連線"; badge.className = "badge"; return; }
   btn.innerText = "...";
   client = mqtt.connect("wss://broker.emqx.io:8084/mqtt", { clientId: "web_" + Math.random().toString(16).substr(2, 8) });
-  client.on("connect", () => { btn.innerText = "斷線"; badge.innerText = "已連線"; badge.className = "badge ok"; client.subscribe($("base").value.trim() + "/state"); });
+  client.on("connect", () => { 
+    btn.innerText = "斷線"; badge.innerText = "已連線"; badge.className = "badge ok"; 
+    client.subscribe($("base").value.trim() + "/state"); 
+    
+    // ★ 連線成功後，順便去抓歷史資料
+    loadHistory();
+  });
   client.on("message", (topic, msg) => {
     try {
       const d = JSON.parse(msg.toString());
